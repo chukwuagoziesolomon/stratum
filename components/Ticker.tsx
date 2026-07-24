@@ -5,6 +5,8 @@ const items = [
   { label: "Stratum Bedrock Fund", value: "NAV $104.20", delta: "+0.1%" },
   { label: "Stratum Midstream Fund", value: "NAV $112.88", delta: "+0.3%" },
   { label: "Stratum Upstream Fund", value: "NAV $131.05", delta: "+0.9%" },
+  { label: "BTC · Crypto Fund", value: "$61,240", delta: "+2.1%" },
+  { label: "ETH · Crypto Fund", value: "$3,380", delta: "-0.8%" },
 ];
 
 export default function Ticker() {

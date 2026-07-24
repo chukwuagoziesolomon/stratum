@@ -7,14 +7,14 @@ import RigIllustration from "./RigIllustration";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-petrol-line">
+    <section className="relative min-h-[560px] overflow-hidden border-b border-petrol-line sm:min-h-[620px] md:min-h-[720px]">
       <div className="absolute inset-0">
         <RigIllustration />
       </div>
       <div className="grain-overlay absolute inset-0" />
       <div className="absolute inset-0 bg-gradient-to-t from-petrol via-petrol/55 to-petrol/10" />
 
-      <div className="relative mx-auto max-w-5xl px-6 pb-20 pt-40 text-center md:pb-28 md:pt-52">
+      <div className="relative mx-auto max-w-5xl px-6 pb-16 pt-32 text-center sm:pb-20 sm:pt-40 md:pb-28 md:pt-52">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -22,7 +22,7 @@ export default function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-flare/40 bg-flare/10 px-4 py-1.5"
         >
           <Fuel size={14} className="text-flare" />
-          <span className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-flare">
+          <span className="font-display text-[11px] font-semibold uppercase tracking-[0.15em] text-flare sm:text-xs sm:tracking-[0.2em]">
             Oil &amp; Gas Investment Firm
           </span>
         </motion.div>
@@ -31,7 +31,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-balance mt-7 font-display text-5xl font-semibold uppercase leading-[1.05] tracking-tight text-ink-high md:text-7xl"
+          className="text-balance mt-6 font-display text-4xl font-semibold uppercase leading-[1.08] tracking-tight text-ink-high sm:mt-7 sm:text-5xl md:text-7xl"
         >
           Capital in the field.
           <br />

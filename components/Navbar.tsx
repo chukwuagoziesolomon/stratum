@@ -8,6 +8,8 @@ import { Menu, X, Droplet } from "lucide-react";
 const links = [
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
+  { href: "/oil-gas-investing", label: "How It Works" },
+  { href: "/crypto-investing", label: "Crypto" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
@@ -31,7 +33,7 @@ export default function Navbar() {
           Stratum Energy Partners
         </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 lg:flex xl:gap-8">
           {links.map((l) => (
             <Link
               key={l.href}
@@ -43,7 +45,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/login"
             className="font-display text-sm text-ink-muted transition-colors hover:text-ink-high"
@@ -59,7 +61,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="text-ink-high md:hidden"
+          className="text-ink-high lg:hidden"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
@@ -74,7 +76,7 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden border-t border-petrol-line/60 md:hidden"
+            className="overflow-hidden border-t border-petrol-line/60 lg:hidden"
           >
             <div className="flex flex-col gap-1 px-6 py-4">
               {links.map((l) => (

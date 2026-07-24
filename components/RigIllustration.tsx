@@ -4,7 +4,7 @@ export default function RigIllustration() {
       viewBox="0 0 1200 600"
       xmlns="http://www.w3.org/2000/svg"
       className="h-full w-full"
-      preserveAspectRatio="xMidYMax slice"
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
       <style>{`

@@ -89,6 +89,46 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Learn before you invest */}
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <Reveal className="max-w-xl">
+          <p className="font-mono text-xs uppercase tracking-widest text-flare">Before you invest</p>
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink-high md:text-4xl">
+            Two things worth reading first.
+          </h2>
+        </Reveal>
+
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Reveal className="group rounded-md border border-petrol-line bg-petrol-panel p-8 transition-colors hover:border-flare/50">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-flare">Investor education</p>
+            <h3 className="mt-3 font-display text-xl font-semibold text-ink-high">
+              How oil &amp; gas investing actually works
+            </h3>
+            <p className="mt-3 font-body text-sm leading-relaxed text-ink-muted">
+              Where returns come from, the different ways to get exposure, sector-specific risks, and
+              a glossary of the terms you'll see in your fund documents.
+            </p>
+            <Link href="/oil-gas-investing" className="mt-5 flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wide text-flare">
+              Read the guide <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+          </Reveal>
+
+          <Reveal delay={0.08} className="group rounded-md border border-petrol-line bg-petrol-panel p-8 transition-colors hover:border-brass/50">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-brass">A separate offering</p>
+            <h3 className="mt-3 font-display text-xl font-semibold text-ink-high">
+              Crypto investing, kept apart from our energy funds
+            </h3>
+            <p className="mt-3 font-body text-sm leading-relaxed text-ink-muted">
+              BTC, ETH, and a small tokenized-royalty pilot sleeve — its own fund, own minimum, own
+              risk disclosure, never blended into an energy fund's NAV.
+            </p>
+            <Link href="/crypto-investing" className="mt-5 flex items-center gap-1.5 font-display text-sm font-semibold uppercase tracking-wide text-brass">
+              See the details <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Services */}
       <section className="mx-auto max-w-6xl px-6 py-24">
         <Reveal className="max-w-xl">
