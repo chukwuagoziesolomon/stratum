@@ -59,8 +59,8 @@ export default function OilGasInvesting() {
         </div>
         <Reveal delay={0.2} className="mt-6 rounded-md border border-brass/30 bg-brass/5 p-6">
           <p className="font-body text-sm leading-relaxed text-ink-muted">
-            <span className="font-display font-semibold text-brass">Where Stratum fits in: </span>
-            each Stratum fund is a pooled vehicle holding a diversified mix of royalty and working
+            <span className="font-display font-semibold text-brass">Where AeroneX fits in: </span>
+            each AeroneX fund is a pooled vehicle holding a diversified mix of royalty and working
             interests across upstream, midstream, or downstream projects, so you get professional
             diligence and diversification without buying a single well interest directly.
           </p>

@@ -30,7 +30,7 @@ export default function Navbar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
             <Droplet size={16} strokeWidth={2.5} />
           </span>
-          Stratum Energy Partners
+          AeroneX Oil & Gas
         </Link>
 
         <div className="hidden items-center gap-6 lg:flex xl:gap-8">

@@ -44,7 +44,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="mx-auto mt-6 max-w-2xl font-body text-lg leading-relaxed text-ink-muted [text-shadow:0_1px_12px_rgba(0,0,0,0.9)]"
         >
-          Stratum Energy Partners gives investors direct, transparent access to real upstream
+          AeroneX Oil & Gas gives investors direct, transparent access to real upstream
           drilling, midstream pipelines, and downstream refining projects — with published well
           data, variable returns, and no promises we can't keep.
         </motion.p>

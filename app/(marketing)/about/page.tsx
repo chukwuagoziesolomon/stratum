@@ -24,7 +24,7 @@ export default function About() {
           Built by engineers who got tired of glossy brochures.
         </h1>
         <p className="mt-5 font-body text-lg leading-relaxed text-ink-muted">
-          Stratum Energy Partners exists because too much of the energy investment world is sold on
+          AeroneX Oil & Gas exists because too much of the energy investment world is sold on
           feeling, not data. We built the firm we wished existed when we were evaluating our own first
           well interests.
         </p>

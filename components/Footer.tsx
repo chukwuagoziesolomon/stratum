@@ -11,7 +11,7 @@ export default function Footer() {
               <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
                 <Droplet size={16} strokeWidth={2.5} />
               </span>
-              Stratum
+              AeroneX
             </div>
             <p className="mt-4 max-w-xs font-body text-sm leading-relaxed text-ink-muted">
               Structured access to real oil, gas, and energy infrastructure investments. Variable
@@ -57,7 +57,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-petrol-line/60 pt-8 font-body text-xs text-ink-soft md:flex-row">
-          <span>© {new Date().getFullYear()} Stratum Energy Partners. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} AeroneX Oil & Gas. All rights reserved.</span>
           <span>Registered office: Allendale Square, Perth, Australia</span>
         </div>
       </div>

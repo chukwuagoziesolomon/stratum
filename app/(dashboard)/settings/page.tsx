@@ -204,7 +204,7 @@ export default function Settings() {
                     <div className="mt-3 space-y-3">
                       {[
                         { device: "Chrome on macOS — Perth, AU", current: true },
-                        { device: "Stratum iOS App — Perth, AU", current: false },
+                        { device: "AeroneX iOS App — Perth, AU", current: false },
                       ].map((s) => (
                         <div key={s.device} className="flex items-center justify-between rounded-sm border border-petrol-line/60 px-4 py-3">
                           <div>

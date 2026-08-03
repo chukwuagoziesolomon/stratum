@@ -26,7 +26,7 @@ export async function POST(request: Request) {
               <p style="margin: 0; font-size: 15px; line-height: 1.6;">${walletDetails}</p>
             </div>
             <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.7;">We’ll notify you when the transaction is confirmed and reflected in your account.</p>
-            <p style="margin: 0; font-size: 16px;">Regards,<br/>The Stratum Team</p>
+            <p style="margin: 0; font-size: 16px;">Regards,<br/>The AeroneX Team</p>
           </div>
         </div>
       </div>
@@ -34,9 +34,9 @@ export async function POST(request: Request) {
 
     await sendEmail({
       to: email,
-      subject: `Stratum ${title}`,
+      subject: `AeroneX ${title}`,
       html,
-      text: `Hi ${name},\n\nWe have received your ${action} request for ${amount}. ${walletDetails}\n\nWe will notify you once the transaction is confirmed and reflected in your account.\n\nRegards,\nThe Stratum Team`,
+      text: `Hi ${name},\n\nWe have received your ${action} request for ${amount}. ${walletDetails}\n\nWe will notify you once the transaction is confirmed and reflected in your account.\n\nRegards,\nThe AeroneX Team`,
     });
 
     return NextResponse.json({ success: true });

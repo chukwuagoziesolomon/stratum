@@ -9,7 +9,7 @@ type Msg = { role: "user" | "assistant"; content: string; reasoning_details?: un
 const STARTER: Msg = {
   role: "assistant",
   content:
-    "Hi, I'm the Stratum support assistant. Ask me about funds, minimums, distributions, or your account — and I can connect you to a human advisor any time.",
+    "Hi, I'm the AeroneX support assistant. Ask me about funds, minimums, distributions, or your account — and I can connect you to a human advisor any time.",
 };
 
 export default function ChatWidget() {
@@ -82,7 +82,7 @@ export default function ChatWidget() {
           >
             <div className="flex items-center justify-between border-b border-petrol-line bg-petrol px-4 py-3">
               <div>
-                <p className="font-display text-sm font-medium text-ink-high">Stratum Support</p>
+                <p className="font-display text-sm font-medium text-ink-high">AeroneX Support</p>
                 <p className="flex items-center gap-1.5 font-body text-xs text-flare">
                   <span className="h-1.5 w-1.5 rounded-full bg-flare" /> AI assistant · online
                 </p>

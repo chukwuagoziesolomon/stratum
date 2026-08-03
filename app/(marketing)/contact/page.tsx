@@ -26,7 +26,7 @@ export default function Contact() {
             <Mail size={18} className="mt-1 text-brass" />
             <div>
               <p className="font-display text-sm font-medium text-ink-high">Email</p>
-              <p className="font-body text-sm text-ink-muted">advisors@stratumenergypartners.com</p>
+              <p className="font-body text-sm text-ink-muted">support@aeronexoilandgas.com</p>
             </div>
           </div>
           <div className="flex items-start gap-4">

@@ -21,7 +21,7 @@ export default function AuthLayout({
             <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
               <Droplet size={16} strokeWidth={2.5} />
             </span>
-            Stratum
+            AeroneX
           </Link>
           <h1 className="mt-10 font-display text-2xl font-semibold text-ink-high">{title}</h1>
           <p className="mt-2 font-body text-sm text-ink-muted">{subtitle}</p>

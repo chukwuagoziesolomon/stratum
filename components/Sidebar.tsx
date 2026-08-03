@@ -50,7 +50,7 @@ export default function Sidebar() {
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
           <Droplet size={16} strokeWidth={2.5} />
         </span>
-        Stratum
+        AeroneX
       </Link>
 
       <nav className="flex-1 space-y-1 px-3">
@@ -102,7 +102,7 @@ export default function Sidebar() {
           <span className="flex h-7 w-7 items-center justify-center rounded-full border border-brass/60 text-brass">
             <Droplet size={14} strokeWidth={2.5} />
           </span>
-          Stratum
+          AeroneX
         </Link>
         <button onClick={() => setOpen(!open)} aria-label="Toggle menu" className="text-ink-high">
           {open ? <X size={22} /> : <Menu size={22} />}

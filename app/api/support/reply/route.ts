@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: `Response from Stratum support: ${messageId}`,
+      subject: `Response from AeroneX support: ${messageId}`,
       html: `
         <div style="font-family: system-ui, sans-serif; color: #0f0b08; background: #f7f8fb; padding: 24px;">
           <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 16px; border: 1px solid #e7e9ed; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 11, 8, 0.08);">
@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
               <div style="background: #f2f5fb; border-radius: 12px; padding: 18px;">
                 <p style="margin: 0; font-size: 15px; line-height: 1.7;">${reply}</p>
               </div>
-              <p style="margin: 24px 0 0; font-size: 16px;">Thanks,<br/>The Stratum Support Team</p>
+              <p style="margin: 24px 0 0; font-size: 16px;">Thanks,<br/>The AeroneX Support Team</p>
             </div>
           </div>
         </div>
       `,
-      text: `Hi ${name},\n\n${reply}\n\nThanks,\nThe Stratum Support Team`,
+      text: `Hi ${name},\n\n${reply}\n\nThanks,\nThe AeroneX Support Team`,
     });
 
     return NextResponse.json({ success: true });

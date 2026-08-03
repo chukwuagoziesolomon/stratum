@@ -181,7 +181,7 @@ export const waysToInvest = [
   },
   {
     title: "Pooled fund vehicles",
-    body: "Capital from many investors is combined into a single fund (like Stratum's) that holds a diversified basket of royalty or working interests, run by a manager. Lower minimums, professional diligence, less single-well concentration risk.",
+    body: "Capital from many investors is combined into a single fund (like AeroneX's) that holds a diversified basket of royalty or working interests, run by a manager. Lower minimums, professional diligence, less single-well concentration risk.",
   },
 ];
 
@@ -227,7 +227,7 @@ export const cryptoRisks = [
 
 export const faqs = [
   {
-    q: "What does Stratum Energy Partners actually do?",
+    q: "What does AeroneX Oil & Gas actually do?",
     a: "We source, vet, and structure investment access to oil & gas and adjacent energy infrastructure projects — from producing royalty interests to midstream infrastructure and early-stage exploration. We are not a bank and do not guarantee returns.",
   },
   {

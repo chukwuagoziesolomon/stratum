@@ -15,7 +15,7 @@ export default function CryptoInvesting() {
           Crypto investing, kept apart from our oil &amp; gas funds.
         </h1>
         <p className="mt-5 font-body text-lg leading-relaxed text-ink-muted">
-          Some Stratum clients want digital-asset exposure alongside their energy holdings. We offer
+          Some AeroneX clients want digital-asset exposure alongside their energy holdings. We offer
           it — but as its own distinct, optional fund with its own risk profile, minimum, and
           disclosures. It is not blended into any oil &amp; gas fund's NAV or returns.
         </p>

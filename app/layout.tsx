@@ -3,9 +3,9 @@ import "./globals.css";
 import ChatWidget from "@/components/ChatWidget";
 
 export const metadata: Metadata = {
-  title: "Stratum Energy Partners — Oil & Gas Investment Firm",
+  title: "AeroneX Oil & Gas — Investment Platform",
   description:
-    "Stratum Energy Partners is an oil & gas investment firm giving investors direct access to upstream drilling, midstream pipelines, and downstream refining projects. Transparent, variable returns — no guarantees.",
+    "AeroneX Oil & Gas is an investment platform giving investors direct access to upstream opportunities and transparent portfolio insights.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
