@@ -5,7 +5,7 @@ import CoreSample from "@/components/CoreSample";
 import Link from "next/link";
 import type { Program, Project, Testimonial } from "@/lib/data";
 import { ShieldCheck, Gauge, Flame, Factory, Fuel, ArrowRight } from "lucide-react";
-import pool from "@/lib/db";
+import { programs as programsData, projects as projectsData, testimonials as testimonialsData } from "@/lib/data";
 
 const stats = [
   { value: "$340M+", label: "Capital deployed to date" },
@@ -28,38 +28,10 @@ const services = [
   { icon: ShieldCheck, title: "Portfolio Reporting & Tax Docs", body: "Consolidated statements, K-1 preparation support, and full transaction history export." },
 ];
 
-export default async function Home() {
-  const [programsRes, projectsRes, testimonialsRes] = await Promise.all([
-    pool.query("SELECT name, code, min_investment, max_investment, horizon, historical_range, strata, risk_label, description FROM programs ORDER BY strata ASC"),
-    pool.query("SELECT title, category, location, status, summary FROM projects ORDER BY id ASC"),
-    pool.query("SELECT quote, name, role FROM testimonials ORDER BY id ASC"),
-  ]);
-
-  const programs = programsRes.rows.map((p: Record<string, unknown>) => ({
-    name: p.name as string,
-    code: p.code as string,
-    minInvestment: p.min_investment as string,
-    maxInvestment: p.max_investment as string,
-    horizon: p.horizon as string,
-    historicalRange: p.historical_range as string,
-    strata: p.strata as number,
-    riskLabel: p.risk_label as Program["riskLabel"],
-    description: p.description as string,
-  }));
-
-  const mappedProjects: Project[] = projectsRes.rows.map((p: Record<string, unknown>) => ({
-    title: p.title as string,
-    category: p.category as string,
-    location: p.location as string,
-    status: p.status as Project["status"],
-    summary: p.summary as string,
-  }));
-
-  const mappedTestimonials: Testimonial[] = testimonialsRes.rows.map((t: Record<string, unknown>) => ({
-    quote: t.quote as string,
-    name: t.name as string,
-    role: t.role as string,
-  }));
+export default function Home() {
+  const programs: Program[] = programsData;
+  const mappedProjects: Project[] = projectsData;
+  const mappedTestimonials: Testimonial[] = testimonialsData;
   return (
     <>
       <Hero />

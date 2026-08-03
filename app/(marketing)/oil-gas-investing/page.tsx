@@ -2,37 +2,13 @@ import Reveal from "@/components/Reveal";
 import Link from "next/link";
 import type { SectorLayer, WaysToInvest, SectorRisk, GlossaryEntry } from "@/lib/data";
 import { Layers, HandCoins, Users2, AlertTriangle, BookOpen, ArrowRight } from "lucide-react";
-import pool from "@/lib/db";
+import { sectorLayers, waysToInvest, sectorRisks, glossary } from "@/lib/data";
 
-export default async function OilGasInvesting() {
-  const [sectorLayersRes, waysToInvestRes, sectorRisksRes, glossaryRes] = await Promise.all([
-    pool.query("SELECT tier, title, body, risk FROM sector_layers ORDER BY id ASC"),
-    pool.query("SELECT title, body FROM ways_to_invest ORDER BY id ASC"),
-    pool.query("SELECT title, body FROM sector_risks ORDER BY id ASC"),
-    pool.query("SELECT term, def FROM glossary ORDER BY id ASC"),
-  ]);
-
-  const sectorLayers = sectorLayersRes.rows.map((s: Record<string, unknown>) => ({
-    tier: s.tier as string,
-    title: s.title as string,
-    body: s.body as string,
-    risk: s.risk as string,
-  }));
-
-  const waysToInvest = waysToInvestRes.rows.map((w: Record<string, unknown>) => ({
-    title: w.title as string,
-    body: w.body as string,
-  }));
-
-  const sectorRisks = sectorRisksRes.rows.map((r: Record<string, unknown>) => ({
-    title: r.title as string,
-    body: r.body as string,
-  }));
-
-  const glossary = glossaryRes.rows.map((g: Record<string, unknown>) => ({
-    term: g.term as string,
-    def: g.def as string,
-  }));
+export default function OilGasInvesting() {
+  const sectorLayersLocal: SectorLayer[] = sectorLayers;
+  const waysToInvestLocal: WaysToInvest[] = waysToInvest;
+  const sectorRisksLocal: SectorRisk[] = sectorRisks;
+  const glossaryLocal: GlossaryEntry[] = glossary;
   return (
     <div className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">
@@ -54,7 +30,7 @@ export default async function OilGasInvesting() {
           <h2 className="font-display text-2xl font-semibold text-ink-high">Where returns come from</h2>
         </Reveal>
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {sectorLayers.map((l: { tier: string; title: string; body: string; risk: string }, i: number) => (
+          {sectorLayersLocal.map((l: { tier: string; title: string; body: string; risk: string }, i: number) => (
             <Reveal key={l.tier} delay={i * 0.08} className="rounded-md border border-petrol-line bg-petrol-panel p-7">
               <p className="font-mono text-[11px] uppercase tracking-wider text-brass">{l.tier}</p>
               <h3 className="mt-2 font-display text-lg font-semibold text-ink-high">{l.title}</h3>
@@ -74,7 +50,7 @@ export default async function OilGasInvesting() {
           <h2 className="font-display text-2xl font-semibold text-ink-high">Ways to get exposure</h2>
         </Reveal>
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {waysToInvest.map((w: { title: string; body: string }, i: number) => (
+          {waysToInvestLocal.map((w: { title: string; body: string }, i: number) => (
             <Reveal key={w.title} delay={i * 0.08} className="rounded-md border border-petrol-line bg-petrol-panel p-7">
               <h3 className="font-display text-lg font-semibold text-ink-high">{w.title}</h3>
               <p className="mt-3 font-body text-sm leading-relaxed text-ink-muted">{w.body}</p>
@@ -98,7 +74,7 @@ export default async function OilGasInvesting() {
           <h2 className="font-display text-2xl font-semibold text-ink-high">Risks specific to this sector</h2>
         </Reveal>
         <div className="mt-8 divide-y divide-petrol-line rounded-md border border-petrol-line bg-petrol-panel">
-          {sectorRisks.map((r: { title: string; body: string }, i: number) => (
+          {sectorRisksLocal.map((r: { title: string; body: string }, i: number) => (
             <Reveal key={r.title} delay={i * 0.05} className="p-6">
               <h3 className="font-display text-sm font-semibold text-ink-high">{r.title}</h3>
               <p className="mt-1.5 font-body text-sm leading-relaxed text-ink-muted">{r.body}</p>
@@ -118,7 +94,7 @@ export default async function OilGasInvesting() {
           <h2 className="font-display text-2xl font-semibold text-ink-high">Glossary</h2>
         </Reveal>
         <div className="mt-8 grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
-          {glossary.map((g: { term: string; def: string }, i: number) => (
+          {glossaryLocal.map((g: { term: string; def: string }, i: number) => (
             <Reveal key={g.term} delay={i * 0.04} className="border-b border-petrol-line/60 pb-4">
               <p className="font-display text-sm font-semibold text-brass">{g.term}</p>
               <p className="mt-1 font-body text-sm leading-relaxed text-ink-muted">{g.def}</p>

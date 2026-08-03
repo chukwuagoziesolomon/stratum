@@ -1,17 +1,9 @@
 import Reveal from "@/components/Reveal";
 import type { Project } from "@/lib/data";
-import pool from "@/lib/db";
+import { projects } from "@/lib/data";
 
-export default async function Portfolio() {
-  const projectsRes = await pool.query("SELECT title, category, location, status, summary FROM projects ORDER BY id ASC");
-
-  const projects = projectsRes.rows.map((p: Record<string, unknown>) => ({
-    title: p.title as string,
-    category: p.category as string,
-    location: p.location as string,
-    status: p.status as Project["status"],
-    summary: p.summary as string,
-  }));
+export default function Portfolio() {
+  const projectsLocal: Project[] = projects;
   return (
     <div className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">
@@ -26,7 +18,7 @@ export default async function Portfolio() {
       </Reveal>
 
       <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {projects.map((p: { title: string; category: string; location: string; status: string; summary: string }, i: number) => (
+        {projectsLocal.map((p: { title: string; category: string; location: string; status: string; summary: string }, i: number) => (
           <Reveal key={p.title} delay={i * 0.08} className="rounded-md border border-petrol-line bg-petrol-panel p-8">
             <p className="font-mono text-[11px] uppercase tracking-wider text-ink-soft">
               {p.category} · {p.location}
