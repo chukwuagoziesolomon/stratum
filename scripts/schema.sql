@@ -1,0 +1,73 @@
+CREATE TABLE IF NOT EXISTS programs (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  code TEXT NOT NULL UNIQUE,
+  min_investment TEXT NOT NULL,
+  max_investment TEXT NOT NULL,
+  horizon TEXT NOT NULL,
+  historical_range TEXT NOT NULL,
+  strata INTEGER NOT NULL,
+  risk_label TEXT NOT NULL,
+  description TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  location TEXT NOT NULL,
+  status TEXT NOT NULL,
+  summary TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS testimonials (
+  id SERIAL PRIMARY KEY,
+  quote TEXT NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sector_layers (
+  id SERIAL PRIMARY KEY,
+  tier TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  risk TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ways_to_invest (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sector_risks (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS glossary (
+  id SERIAL PRIMARY KEY,
+  term TEXT NOT NULL,
+  def TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS crypto_assets (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT NOT NULL,
+  name TEXT NOT NULL,
+  allocation_range TEXT NOT NULL,
+  role TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS crypto_risks (
+  id SERIAL PRIMARY KEY,
+  risk TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS faqs (
+  id SERIAL PRIMARY KEY,
+  q TEXT NOT NULL,
+  a TEXT NOT NULL
+);

@@ -1,9 +1,23 @@
 import Reveal from "@/components/Reveal";
 import Link from "next/link";
-import { cryptoAssets, cryptoRisks } from "@/lib/data";
+import type { CryptoAsset } from "@/lib/data";
 import { AlertTriangle, Lock, Layers3, ArrowRight, Bitcoin } from "lucide-react";
+import pool from "@/lib/db";
 
-export default function CryptoInvesting() {
+export default async function CryptoInvesting() {
+  const [cryptoAssetsRes, cryptoRisksRes] = await Promise.all([
+    pool.query("SELECT symbol, name, allocation_range, role FROM crypto_assets ORDER BY id ASC"),
+    pool.query("SELECT risk FROM crypto_risks ORDER BY id ASC"),
+  ]);
+
+  const cryptoAssets = cryptoAssetsRes.rows.map((c: Record<string, unknown>) => ({
+    symbol: c.symbol as string,
+    name: c.name as string,
+    allocationRange: c.allocation_range as string,
+    role: c.role as string,
+  }));
+
+  const cryptoRisks = cryptoRisksRes.rows.map((c: Record<string, unknown>) => c.risk as string);
   return (
     <div className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">
@@ -40,7 +54,7 @@ export default function CryptoInvesting() {
           <h2 className="font-display text-2xl font-semibold text-ink-high">What's in the Digital Asset Fund</h2>
         </Reveal>
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {cryptoAssets.map((a, i) => (
+          {cryptoAssets.map((a: { symbol: string; name: string; allocationRange: string; role: string }, i: number) => (
             <Reveal key={a.symbol} delay={i * 0.08} className="rounded-md border border-petrol-line bg-petrol-panel p-7">
               <div className="flex items-center gap-2">
                 <Bitcoin size={16} className="text-brass" />
@@ -94,7 +108,7 @@ export default function CryptoInvesting() {
           <h2 className="font-display text-2xl font-semibold text-ink-high">Full risk disclosure</h2>
         </Reveal>
         <ul className="mt-6 space-y-3">
-          {cryptoRisks.map((r, i) => (
+          {cryptoRisks.map((r: string, i: number) => (
             <Reveal key={i} delay={i * 0.05} className="flex gap-3 rounded-sm border border-petrol-line/60 bg-petrol-panel/60 p-4">
               <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
               <p className="font-body text-sm leading-relaxed text-ink-muted">{r}</p>

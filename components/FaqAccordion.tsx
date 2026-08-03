@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { faqs } from "@/lib/data";
+
+interface Faq {
+  q: string;
+  a: string;
+}
 
 export default function FaqAccordion() {
+  const [faqs, setFaqs] = useState<Faq[]>([]);
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  useEffect(() => {
+    fetch("/api/faqs")
+      .then(r => r.json())
+      .then(setFaqs);
+  }, []);
 
   return (
     <div className="divide-y divide-petrol-line border-y border-petrol-line">

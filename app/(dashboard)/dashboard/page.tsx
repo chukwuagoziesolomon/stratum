@@ -1,36 +1,43 @@
 import { ArrowUpRight, ArrowDownRight, Wallet, Percent, CalendarClock, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import NavChart from "@/components/NavChart";
+import pool from "@/lib/db";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 
-const stats = [
-  { label: "Total balance", value: "$48,210.32", change: "+2.4%", up: true, icon: Wallet },
-  { label: "YTD return", value: "8.7%", change: "vs 6.1% last year", up: true, icon: Percent },
-  { label: "Total distributions", value: "$3,940.18", change: "since inception", up: true, icon: PiggyBank },
-  { label: "Next distribution", value: "Sep 30", change: "Bedrock & Midstream funds", up: null, icon: CalendarClock },
-];
+const iconMap: Record<string, React.ElementType> = { Wallet, Percent, CalendarClock, PiggyBank };
+const JWT_SECRET = process.env.JWT_SECRET || "stratum-energy-secret-key-2026";
 
-const holdings = [
-  { name: "Bedrock Income Fund", code: "BRK", value: "$14,020.00", weight: "29%", ytd: "+5.1%" },
-  { name: "Midstream Access Fund", code: "MSA", value: "$18,640.00", weight: "39%", ytd: "+9.8%" },
-  { name: "Upstream Development Fund", code: "UDF", value: "$12,300.00", weight: "25%", ytd: "+14.2%" },
-  { name: "Frontier Exploration Fund", code: "FEF", value: "$3,250.32", weight: "7%", ytd: "-3.6%" },
-];
+function getCurrentUser() {
+  const token = cookies().get("stratum_token")?.value;
+  if (!token) return null;
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: number; email: string; name: string };
+  } catch {
+    return null;
+  }
+}
 
-const activity = [
-  { label: "Distribution received — Midstream Access Fund", date: "Jul 1, 2026", amount: "+$412.60" },
-  { label: "Deposit via bank transfer", date: "Jun 18, 2026", amount: "+$5,000.00" },
-  { label: "Distribution received — Bedrock Income Fund", date: "Apr 1, 2026", amount: "+$198.10" },
-  { label: "Allocation — Upstream Development Fund", date: "Mar 22, 2026", amount: "-$4,000.00" },
-];
+export default async function DashboardOverview() {
+  const user = getCurrentUser();
+  const statsResult = await pool.query("SELECT label, value, change, up, icon FROM stats ORDER BY id ASC");
+  const holdings = (await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings ORDER BY id ASC")).rows;
+  const activity = (await pool.query("SELECT label, date, amount FROM transactions ORDER BY id ASC LIMIT 4")).rows;
 
-export default function DashboardOverview() {
+  const stats = statsResult.rows.map((s: { label: string; value: string; change: string; up: string; icon: string }) => ({
+    label: s.label,
+    value: s.value,
+    change: s.change,
+    up: s.up === "true" ? true : s.up === "false" ? false : null,
+    icon: iconMap[s.icon] || Wallet,
+  }));
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-brass">Overview</p>
           <h1 className="mt-2 font-display text-2xl font-semibold text-ink-high md:text-3xl">
-            Welcome back, Jordan.
+            {user ? `Welcome back, ${user.name}.` : "Welcome back."}
           </h1>
         </div>
         <Link
@@ -42,20 +49,29 @@ export default function DashboardOverview() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-md border border-petrol-line bg-petrol-panel p-5">
-            <div className="flex items-center justify-between">
-              <p className="font-body text-sm text-ink-muted">{s.label}</p>
-              <s.icon size={16} className="text-brass" />
+        {stats.length > 0 ? (
+          stats.map((s: { label: string; value: string; change: string; up: boolean | null; icon: React.ElementType }) => (
+            <div key={s.label} className="rounded-md border border-petrol-line bg-petrol-panel p-5">
+              <div className="flex items-center justify-between">
+                <p className="font-body text-sm text-ink-muted">{s.label}</p>
+                <s.icon size={16} className="text-brass" />
+              </div>
+              <p className="mt-3 font-display text-2xl font-semibold text-ink-high">{s.value}</p>
+              <p className={`mt-1 flex items-center gap-1 font-mono text-xs ${s.up === true ? "text-emerald-400" : s.up === false ? "text-red-400" : "text-ink-muted"}`}>
+                {s.up === true && <ArrowUpRight size={12} />}
+                {s.up === false && <ArrowDownRight size={12} />}
+                {s.change}
+              </p>
             </div>
-            <p className="mt-3 font-display text-2xl font-semibold text-ink-high">{s.value}</p>
-            <p className={`mt-1 flex items-center gap-1 font-mono text-xs ${s.up === true ? "text-emerald-400" : s.up === false ? "text-red-400" : "text-ink-muted"}`}>
-              {s.up === true && <ArrowUpRight size={12} />}
-              {s.up === false && <ArrowDownRight size={12} />}
-              {s.change}
+          ))
+        ) : (
+          <div className="lg:col-span-4 rounded-md border border-petrol-line bg-petrol-panel p-8 text-center text-ink-muted">
+            <p className="font-display text-lg font-semibold text-ink-high">Dashboard stats are unavailable</p>
+            <p className="mt-2 font-body text-sm">
+              There is no live stat data in the database right now. If you want the dashboard to show values, seed the stats table or connect a production data source.
             </p>
           </div>
-        ))}
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -72,7 +88,7 @@ export default function DashboardOverview() {
         <div className="rounded-md border border-petrol-line bg-petrol-panel p-6">
           <h2 className="font-display text-base font-semibold text-ink-high">Recent activity</h2>
           <ul className="mt-4 space-y-4">
-            {activity.map((a) => (
+            {activity.map((a: { label: string; date: string; amount: string }) => (
               <li key={a.label} className="flex items-start justify-between gap-3 border-b border-petrol-line/60 pb-4 last:border-0 last:pb-0">
                 <div>
                   <p className="font-body text-sm text-ink-high">{a.label}</p>
@@ -104,7 +120,7 @@ export default function DashboardOverview() {
             </tr>
           </thead>
           <tbody className="font-body text-sm">
-            {holdings.map((h) => (
+            {holdings.map((h: { name: string; code: string; value: string; weight: string; ytd: string }) => (
               <tr key={h.code} className="border-t border-petrol-line/60">
                 <td className="px-6 py-4">
                   <p className="text-ink-high">{h.name}</p>

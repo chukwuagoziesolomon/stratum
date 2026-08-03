@@ -1,7 +1,8 @@
 import Reveal from "@/components/Reveal";
 import CoreSample from "@/components/CoreSample";
-import { programs } from "@/lib/data";
+import type { Program } from "@/lib/data";
 import { FileText, Headphones, BarChart3, Landmark } from "lucide-react";
+import pool from "@/lib/db";
 
 const extras = [
   { icon: FileText, title: "Fund documents & K-1 prep", body: "Offering memoranda, quarterly reports, and tax document support delivered from your dashboard." },
@@ -10,7 +11,20 @@ const extras = [
   { icon: Headphones, title: "24/7 AI + human support", body: "Instant answers from our AI assistant, with escalation to a licensed advisor for anything account-specific." },
 ];
 
-export default function Services() {
+export default async function Services() {
+  const programsRes = await pool.query("SELECT name, code, min_investment, max_investment, horizon, historical_range, strata, risk_label, description FROM programs ORDER BY strata ASC");
+
+  const programs = programsRes.rows.map((p: Record<string, unknown>) => ({
+    name: p.name as string,
+    code: p.code as string,
+    minInvestment: p.min_investment as string,
+    maxInvestment: p.max_investment as string,
+    horizon: p.horizon as string,
+    historicalRange: p.historical_range as string,
+    strata: p.strata as number,
+    riskLabel: p.risk_label as Program["riskLabel"],
+    description: p.description as string,
+  }));
   return (
     <div className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">

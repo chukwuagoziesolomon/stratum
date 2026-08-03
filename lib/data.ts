@@ -69,6 +69,28 @@ export type Project = {
   summary: string;
 };
 
+export type SectorLayer = {
+  tier: string;
+  title: string;
+  body: string;
+  risk: string;
+};
+
+export type WaysToInvest = {
+  title: string;
+  body: string;
+};
+
+export type SectorRisk = {
+  title: string;
+  body: string;
+};
+
+export type GlossaryEntry = {
+  term: string;
+  def: string;
+};
+
 export const projects: Project[] = [
   {
     title: "Delta Ridge Well Cluster",
@@ -100,7 +122,13 @@ export const projects: Project[] = [
   },
 ];
 
-export const testimonials = [
+export type Testimonial = {
+  quote: string;
+  name: string;
+  role: string;
+};
+
+export const testimonials: Testimonial[] = [
   {
     quote:
       "What I appreciated most was seeing the actual well data before committing capital. Nothing about the process felt like a sales pitch.",

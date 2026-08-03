@@ -3,8 +3,9 @@ import Ticker from "@/components/Ticker";
 import Reveal from "@/components/Reveal";
 import CoreSample from "@/components/CoreSample";
 import Link from "next/link";
-import { programs, projects, testimonials } from "@/lib/data";
+import type { Program, Project, Testimonial } from "@/lib/data";
 import { ShieldCheck, Gauge, Flame, Factory, Fuel, ArrowRight } from "lucide-react";
+import pool from "@/lib/db";
 
 const stats = [
   { value: "$340M+", label: "Capital deployed to date" },
@@ -27,7 +28,38 @@ const services = [
   { icon: ShieldCheck, title: "Portfolio Reporting & Tax Docs", body: "Consolidated statements, K-1 preparation support, and full transaction history export." },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const [programsRes, projectsRes, testimonialsRes] = await Promise.all([
+    pool.query("SELECT name, code, min_investment, max_investment, horizon, historical_range, strata, risk_label, description FROM programs ORDER BY strata ASC"),
+    pool.query("SELECT title, category, location, status, summary FROM projects ORDER BY id ASC"),
+    pool.query("SELECT quote, name, role FROM testimonials ORDER BY id ASC"),
+  ]);
+
+  const programs = programsRes.rows.map((p: Record<string, unknown>) => ({
+    name: p.name as string,
+    code: p.code as string,
+    minInvestment: p.min_investment as string,
+    maxInvestment: p.max_investment as string,
+    horizon: p.horizon as string,
+    historicalRange: p.historical_range as string,
+    strata: p.strata as number,
+    riskLabel: p.risk_label as Program["riskLabel"],
+    description: p.description as string,
+  }));
+
+  const mappedProjects: Project[] = projectsRes.rows.map((p: Record<string, unknown>) => ({
+    title: p.title as string,
+    category: p.category as string,
+    location: p.location as string,
+    status: p.status as Project["status"],
+    summary: p.summary as string,
+  }));
+
+  const mappedTestimonials: Testimonial[] = testimonialsRes.rows.map((t: Record<string, unknown>) => ({
+    quote: t.quote as string,
+    name: t.name as string,
+    role: t.role as string,
+  }));
   return (
     <>
       <Hero />
@@ -167,7 +199,7 @@ export default function Home() {
           </Reveal>
 
           <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {projects.map((p, i) => (
+            {mappedProjects.map((p, i) => (
               <Reveal key={p.title} delay={i * 0.07} className="rounded-md border border-petrol-line bg-petrol p-6">
                 <p className="font-mono text-[11px] uppercase tracking-wider text-ink-soft">{p.category} · {p.location}</p>
                 <h3 className="mt-3 font-display text-base font-semibold text-ink-high">{p.title}</h3>
@@ -199,7 +231,7 @@ export default function Home() {
         </Reveal>
 
         <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {testimonials.map((t, i) => (
+          {mappedTestimonials.map((t, i) => (
             <Reveal key={t.name} delay={i * 0.08} className="rounded-md border border-petrol-line bg-petrol-panel p-7">
               <p className="font-body text-sm italic leading-relaxed text-ink-high">"{t.quote}"</p>
               <p className="mt-5 font-display text-sm font-medium text-ink-high">{t.name}</p>

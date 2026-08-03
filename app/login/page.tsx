@@ -13,7 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email") || "");
@@ -25,11 +25,26 @@ export default function Login() {
     }
     setError("");
     setLoading(true);
-    // Demo only: no backend is wired up yet. Replace with a real auth call.
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Invalid email or password.");
+        setLoading(false);
+        return;
+      }
+
       router.push("/dashboard");
-    }, 900);
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (

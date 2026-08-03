@@ -30,13 +30,14 @@ export default function Signup() {
 
   const s = strength(pw);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const name = String(form.get("name") || "");
     const email = String(form.get("email") || "");
+    const password = String(form.get("password") || "");
 
-    if (!name || !email || !pw) {
+    if (!name || !email || !password) {
       setError("Fill in all fields to continue.");
       return;
     }
@@ -46,11 +47,26 @@ export default function Signup() {
     }
     setError("");
     setLoading(true);
-    // Demo only: no backend is wired up yet. Replace with a real signup call.
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to create account.");
+        setLoading(false);
+        return;
+      }
+
       router.push("/dashboard");
-    }, 900);
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (

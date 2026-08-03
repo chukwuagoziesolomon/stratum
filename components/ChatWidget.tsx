@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { role: "user" | "assistant"; content: string; reasoning_details?: unknown };
 
 const STARTER: Msg = {
   role: "assistant",
@@ -37,7 +37,14 @@ export default function ChatWidget() {
         body: JSON.stringify({ messages: next }),
       });
       const data = await res.json();
-      setMessages([...next, { role: "assistant", content: data.reply } as Msg]);
+      setMessages([
+        ...next,
+        {
+          role: "assistant",
+          content: data.reply,
+          reasoning_details: data.reasoningDetails,
+        } as Msg,
+      ]);
     } catch {
       setMessages([
         ...next,
@@ -92,7 +99,14 @@ export default function ChatWidget() {
                       : "bg-petrol text-ink-high"
                   }`}
                 >
-                  {m.content}
+                      {m.content}
+                  {m.reasoning_details ? (
+                    <div className="mt-2 rounded-2xl bg-ink-muted/10 px-2 py-1 text-[11px] text-ink-muted">
+                      {typeof m.reasoning_details === "string"
+                        ? m.reasoning_details
+                        : JSON.stringify(m.reasoning_details)}
+                    </div>
+                  ) : null}
                 </div>
               ))}
               {loading && (

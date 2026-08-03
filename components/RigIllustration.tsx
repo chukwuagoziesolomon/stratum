@@ -4,7 +4,7 @@ export default function RigIllustration() {
       viewBox="0 0 1200 600"
       xmlns="http://www.w3.org/2000/svg"
       className="h-full w-full"
-      preserveAspectRatio="xMidYMid meet"
+      preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
     >
       <style>{`
@@ -99,16 +99,16 @@ export default function RigIllustration() {
 
       {/* flare stack, right of center */}
       <g>
-        <rect x="850" y="260" width="10" height="260" fill="#221B15" />
-        <rect x="838" y="248" width="34" height="14" fill="#221B15" />
-        <circle cx="855" cy="230" r="70" fill="url(#flareGlow)" className="animate-pulse" />
+        <rect x="700" y="260" width="10" height="260" fill="#221B15" />
+        <rect x="688" y="248" width="34" height="14" fill="#221B15" />
+        <circle cx="705" cy="230" r="70" fill="url(#flareGlow)" className="animate-pulse" />
         <path
-          d="M855,255 C845,235 848,215 855,195 C862,215 866,232 855,255 Z"
+          d="M705,255 C695,235 698,215 705,195 C712,215 716,232 705,255 Z"
           fill="#FF6B35"
           className="flame"
         />
         <path
-          d="M855,248 C850,236 851,224 855,212 C860,224 861,236 855,248 Z"
+          d="M705,248 C700,236 701,224 705,212 C710,224 711,236 705,248 Z"
           fill="#FFC46B"
           className="flame"
           style={{ animationDelay: "0.15s" }}
@@ -116,7 +116,7 @@ export default function RigIllustration() {
         {[0, 1, 2].map((i) => (
           <circle
             key={i}
-            cx={855 + i * 4}
+            cx={705 + i * 4}
             cy={190 - i * 10}
             r={10 + i * 4}
             fill="#4A4038"
@@ -127,7 +127,7 @@ export default function RigIllustration() {
       </g>
 
       {/* pumpjack, foreground left-of-center */}
-      <g transform="translate(300, 340)">
+      <g transform="translate(560, 340)">
         {/* base */}
         <polygon points="-70,180 70,180 45,120 -45,120" fill="#221B15" />
         {/* samson post */}
@@ -147,7 +147,7 @@ export default function RigIllustration() {
       </g>
 
       {/* derrick / drilling tower, background right of pumpjack */}
-      <g transform="translate(560, 260)" stroke="#2E2620" strokeWidth="4" fill="none">
+      <g transform="translate(140, 260)" stroke="#2E2620" strokeWidth="4" fill="none">
         <path d="M0,260 L40,0 L80,260" />
         <path d="M10,220 L70,220 M14,180 L66,180 M18,140 L62,140 M22,100 L58,100 M26,60 L54,60" />
       </g>

@@ -1,23 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const data = [
-  { month: "Aug", value: 41200 },
-  { month: "Sep", value: 42050 },
-  { month: "Oct", value: 41800 },
-  { month: "Nov", value: 43500 },
-  { month: "Dec", value: 44100 },
-  { month: "Jan", value: 43700 },
-  { month: "Feb", value: 45200 },
-  { month: "Mar", value: 46300 },
-  { month: "Apr", value: 45900 },
-  { month: "May", value: 47100 },
-  { month: "Jun", value: 47800 },
-  { month: "Jul", value: 48210 },
-];
+interface NavPoint {
+  month: string;
+  value: number;
+}
 
 export default function NavChart() {
+  const [data, setData] = useState<NavPoint[]>([]);
+
+  useEffect(() => {
+    fetch("/api/nav-history")
+      .then(r => r.json())
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  if (data.length === 0) return null;
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>

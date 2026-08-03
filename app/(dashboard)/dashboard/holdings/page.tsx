@@ -1,11 +1,8 @@
-const holdings = [
-  { name: "Bedrock Income Fund", code: "BRK", value: "$14,020.00", weight: "29%", ytd: "+5.1%", units: "134.02" },
-  { name: "Midstream Access Fund", code: "MSA", value: "$18,640.00", weight: "39%", ytd: "+9.8%", units: "165.31" },
-  { name: "Upstream Development Fund", code: "UDF", value: "$12,300.00", weight: "25%", ytd: "+14.2%", units: "93.87" },
-  { name: "Frontier Exploration Fund", code: "FEF", value: "$3,250.32", weight: "7%", ytd: "-3.6%", units: "28.15" },
-];
+import pool from "@/lib/db";
 
-export default function Holdings() {
+export default async function Holdings() {
+  const result = await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings ORDER BY id ASC");
+  const holdings = result.rows;
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-12">
       <p className="font-mono text-xs uppercase tracking-widest text-brass">Holdings</p>
@@ -25,7 +22,7 @@ export default function Holdings() {
             </tr>
           </thead>
           <tbody className="font-body text-sm">
-            {holdings.map((h) => (
+            {holdings.map((h: { name: string; code: string; value: string; weight: string; ytd: string; units: string }) => (
               <tr key={h.code} className="border-t border-petrol-line/60">
                 <td className="px-6 py-4">
                   <p className="text-ink-high">{h.name}</p>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutGrid,
@@ -27,6 +27,22 @@ const links = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(r => r.json())
+      .then(data => {
+        if (data.user) setUser(data.user);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    window.location.href = "/";
+  }
 
   const content = (
     <div className="flex h-full flex-col">
@@ -61,19 +77,19 @@ export default function Sidebar() {
       <div className="border-t border-petrol-line px-3 py-4">
         <div className="flex items-center gap-3 rounded-sm px-3 py-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brass/20 font-display text-xs font-semibold text-brass">
-            JB
+            {user ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "??"}
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="truncate font-display text-sm text-ink-high">Jordan Blake</p>
-            <p className="truncate font-body text-xs text-ink-muted">jordan@email.com</p>
+            <p className="truncate font-display text-sm text-ink-high">{user ? user.name : "Guest"}</p>
+            <p className="truncate font-body text-xs text-ink-muted">{user ? user.email : "Not signed in"}</p>
           </div>
         </div>
-        <Link
-          href="/"
+        <button
+          onClick={handleLogout}
           className="mt-2 flex items-center gap-3 rounded-sm px-3 py-2.5 font-display text-sm text-ink-muted hover:bg-petrol-panel hover:text-ink-high"
         >
           <LogOut size={17} /> Log out
-        </Link>
+        </button>
       </div>
     </div>
   );

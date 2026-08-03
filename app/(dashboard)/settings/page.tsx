@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -19,31 +19,48 @@ const tabs = [
   { id: "danger", label: "Danger zone", icon: AlertTriangle },
 ];
 
-function Toggle({ defaultOn = false }: { defaultOn?: boolean }) {
-  const [on, setOn] = useState(defaultOn);
+function Toggle({ defaultOn = false, onToggle, on }: { defaultOn?: boolean; onToggle?: (value: boolean) => void; on?: boolean }) {
+  const [internalOn, setInternalOn] = useState(defaultOn);
+
+  useEffect(() => {
+    if (typeof on === "boolean") {
+      setInternalOn(on);
+    }
+  }, [on]);
+
+  function handleToggle() {
+    setInternalOn((current) => {
+      const next = !current;
+      onToggle?.(next);
+      return next;
+    });
+  }
+
   return (
     <button
-      onClick={() => setOn(!on)}
-      className={`relative h-6 w-11 rounded-full transition-colors ${on ? "bg-brass" : "bg-petrol-line"}`}
-      aria-pressed={on}
+      onClick={handleToggle}
+      className={`relative h-6 w-11 rounded-full transition-colors ${internalOn ? "bg-brass" : "bg-petrol-line"}`}
+      aria-pressed={internalOn}
     >
       <motion.span
         layout
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
         className="absolute top-1 h-4 w-4 rounded-full bg-ink-high"
-        style={{ left: on ? "calc(100% - 20px)" : "4px" }}
+        style={{ left: internalOn ? "calc(100% - 20px)" : "4px" }}
       />
     </button>
   );
 }
 
-function Field({ label, defaultValue, type = "text" }: { label: string; defaultValue: string; type?: string }) {
+function Field({ label, value, type = "text", onChange }: { label: string; value: string; type?: string; onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
     <div>
       <label className="font-display text-xs uppercase tracking-wider text-ink-muted">{label}</label>
       <input
         type={type}
-        defaultValue={defaultValue}
+        value={onChange ? value : undefined}
+        defaultValue={onChange ? undefined : value}
+        onChange={onChange}
         className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
       />
     </div>
@@ -51,11 +68,77 @@ function Field({ label, defaultValue, type = "text" }: { label: string; defaultV
 }
 
 export default function Settings() {
-  const [tab, setTab] = useState("profile");
+    const [tab, setTab] = useState("profile");
   const [saved, setSaved] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string; crypto_payout_address?: string; two_factor_enabled?: boolean } | null>(null);
+  const [payoutAddress, setPayoutAddress] = useState("");
+  const [depositWalletAddress, setDepositWalletAddress] = useState<string | null>(null);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  function handleSave(e: React.FormEvent) {
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(r => r.json())
+      .then(data => {
+        if (data.user) {
+          setUser(data.user);
+          setPayoutAddress(data.user.crypto_payout_address || "");
+          setTwoFactorEnabled(Boolean(data.user.two_factor_enabled));
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/crypto/deposit-wallet")
+      .then(r => r.json())
+      .then(data => setDepositWalletAddress(data.depositWalletAddress || null))
+      .catch(() => setDepositWalletAddress(null));
+  }, []);
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    setSaveError(null);
+
+    if (tab === "security") {
+      try {
+        const res = await fetch("/api/auth/security", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ twoFactorEnabled }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Unable to update security settings.");
+        }
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2200);
+      } catch (error: any) {
+        setSaveError(error.message);
+      }
+      return;
+    }
+
+    if (tab === "payout") {
+      try {
+        const res = await fetch("/api/auth/payout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cryptoPayoutAddress: payoutAddress }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Unable to save payout wallet address.");
+        }
+
+        setUser((prev) => (prev ? { ...prev, crypto_payout_address: payoutAddress } : prev));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2200);
+      } catch (error: any) {
+        setSaveError(error.message);
+      }
+      return;
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2200);
   }
@@ -95,10 +178,10 @@ export default function Settings() {
                 <form onSubmit={handleSave} className="space-y-5">
                   <h2 className="font-display text-lg font-semibold text-ink-high">Profile</h2>
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Field label="Full name" defaultValue="Jordan Blake" />
-                    <Field label="Email" defaultValue="jordan@email.com" type="email" />
-                    <Field label="Phone" defaultValue="+61 400 555 123" />
-                    <Field label="Country" defaultValue="Australia" />
+                    <Field label="Full name" value={user?.name || ""} />
+                    <Field label="Email" value={user?.email || ""} type="email" />
+                    <Field label="Phone" value="+61 400 555 123" />
+                    <Field label="Country" value="Australia" />
                   </div>
                   <SaveButton saved={saved} />
                 </form>
@@ -113,12 +196,7 @@ export default function Settings() {
                       <p className="font-display text-sm font-medium text-ink-high">Two-factor authentication</p>
                       <p className="mt-1 font-body text-sm text-ink-muted">Require a code from your phone when logging in.</p>
                     </div>
-                    <Toggle defaultOn />
-                  </div>
-
-                  <div className="space-y-5">
-                    <Field label="Current password" defaultValue="" type="password" />
-                    <Field label="New password" defaultValue="" type="password" />
+                      <Toggle on={twoFactorEnabled} onToggle={setTwoFactorEnabled} />
                   </div>
 
                   <div>
@@ -171,20 +249,28 @@ export default function Settings() {
               {tab === "payout" && (
                 <form onSubmit={handleSave} className="space-y-5">
                   <h2 className="font-display text-lg font-semibold text-ink-high">Payout accounts</h2>
-                  <div className="flex items-center justify-between rounded-md border border-petrol-line p-4">
-                    <div>
-                      <p className="font-display text-sm font-medium text-ink-high">Commonwealth Bank ····4821</p>
-                      <p className="mt-1 font-mono text-xs text-ink-soft">Primary payout account</p>
+                  <div className="space-y-4">
+                    <div className="rounded-md border border-petrol-line p-4">
+                      <p className="font-display text-sm font-medium text-ink-high">Deposit wallet address</p>
+                      <p className="mt-2 font-mono text-sm text-ink-soft">
+                        Send all crypto deposits to the platform wallet configured by the administrator.
+                      </p>
+                      <div className="mt-3 rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-mono text-sm text-ink-high">
+                        {depositWalletAddress || "Not configured yet"}
+                      </div>
                     </div>
-                    <span className="rounded-full bg-flare/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-flare">Verified</span>
+
+                    <Field
+                      label="Your crypto payout wallet address"
+                      value={payoutAddress}
+                      onChange={(e) => setPayoutAddress(e.target.value)}
+                    />
+                    <p className="text-sm text-ink-soft">
+                      This wallet will receive your profit withdrawals and distributions.
+                    </p>
+                    {saveError && <p className="text-sm text-red-400">{saveError}</p>}
+                    <SaveButton saved={saved} label="Save payout wallet" />
                   </div>
-                  <button
-                    type="button"
-                    className="w-full rounded-sm border border-dashed border-petrol-line py-3 font-display text-sm text-ink-muted hover:border-brass/60 hover:text-ink-high"
-                  >
-                    + Link another bank account
-                  </button>
-                  <SaveButton saved={saved} label="Save preferences" />
                 </form>
               )}
 
