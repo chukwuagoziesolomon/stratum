@@ -62,7 +62,7 @@ export default function Signup() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(data.user?.isAdmin ? "/admin" : "/dashboard");
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

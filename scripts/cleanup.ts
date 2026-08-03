@@ -11,19 +11,26 @@ const pool = new Pool({
 async function cleanup() {
   const client = await pool.connect();
   try {
-    await client.query("DELETE FROM stats");
-    await client.query("DELETE FROM holdings");
+    await client.query("DELETE FROM withdrawals");
+    await client.query("DELETE FROM investments");
     await client.query("DELETE FROM transactions");
     await client.query("DELETE FROM documents");
+    await client.query("DELETE FROM stats");
+    await client.query("DELETE FROM holdings");
     await client.query("DELETE FROM nav_history");
+    await client.query("DELETE FROM faqs");
+    await client.query("DELETE FROM crypto_risks");
+    await client.query("DELETE FROM crypto_assets");
+    await client.query("DELETE FROM glossary");
+    await client.query("DELETE FROM sector_risks");
+    await client.query("DELETE FROM ways_to_invest");
+    await client.query("DELETE FROM sector_layers");
+    await client.query("DELETE FROM testimonials");
+    await client.query("DELETE FROM projects");
+    await client.query("DELETE FROM programs");
+    await client.query("DELETE FROM users");
     
-    await client.query("CREATE UNIQUE INDEX IF NOT EXISTS stats_label_unique ON stats(label)");
-    await client.query("CREATE UNIQUE INDEX IF NOT EXISTS holdings_code_unique ON holdings(code)");
-    await client.query("CREATE UNIQUE INDEX IF NOT EXISTS transactions_unique ON transactions(label, date, amount)");
-    await client.query("CREATE UNIQUE INDEX IF NOT EXISTS documents_name_unique ON documents(name)");
-    await client.query("CREATE UNIQUE INDEX IF NOT EXISTS nav_history_month_unique ON nav_history(month)");
-    
-    console.log("Cleanup complete. Unique constraints added.");
+    console.log("All data cleared.");
   } finally {
     client.release();
     await pool.end();

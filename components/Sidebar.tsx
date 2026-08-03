@@ -14,6 +14,7 @@ import {
   Droplet,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 
 const links = [
@@ -24,10 +25,14 @@ const links = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+const adminLinks = [
+  { href: "/admin", label: "Admin", icon: ShieldCheck },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; isAdmin?: boolean } | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -72,6 +77,25 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {user?.isAdmin &&
+          adminLinks.map((l) => {
+            const active = pathname === l.href;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className={`flex items-center gap-3 rounded-sm px-3 py-2.5 font-display text-sm transition-colors ${
+                  active
+                    ? "bg-flare/15 text-flare"
+                    : "text-ink-muted hover:bg-petrol-panel hover:text-ink-high"
+                }`}
+              >
+                <l.icon size={17} />
+                {l.label}
+              </Link>
+            );
+          })}
       </nav>
 
       <div className="border-t border-petrol-line px-3 py-4">

@@ -70,11 +70,13 @@ function Field({ label, value, type = "text", onChange }: { label: string; value
 export default function Settings() {
     const [tab, setTab] = useState("profile");
   const [saved, setSaved] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; crypto_payout_address?: string; two_factor_enabled?: boolean } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; crypto_payout_address?: string; two_factor_enabled?: boolean; is_admin?: boolean } | null>(null);
   const [payoutAddress, setPayoutAddress] = useState("");
   const [depositWalletAddress, setDepositWalletAddress] = useState<string | null>(null);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [hasAdmins, setHasAdmins] = useState(false);
+  const [becomingAdmin, setBecomingAdmin] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -92,7 +94,22 @@ export default function Settings() {
       .then(r => r.json())
       .then(data => setDepositWalletAddress(data.depositWalletAddress || null))
       .catch(() => setDepositWalletAddress(null));
+
+    fetch("/api/admin/status")
+      .then(r => r.json())
+      .then(data => setHasAdmins(data.hasAdmins))
+      .catch(() => {});
   }, []);
+
+  async function handleBecomeAdmin() {
+    setBecomingAdmin(true);
+    const res = await fetch("/api/admin/become", { method: "POST" });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      setBecomingAdmin(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -184,6 +201,16 @@ export default function Settings() {
                     <Field label="Country" value="Australia" />
                   </div>
                   <SaveButton saved={saved} />
+                  {!user?.is_admin && !hasAdmins && (
+                    <button
+                      type="button"
+                      onClick={handleBecomeAdmin}
+                      disabled={becomingAdmin}
+                      className="rounded-sm border border-brass/60 px-5 py-2.5 font-display text-sm text-brass hover:bg-brass/10 disabled:opacity-50"
+                    >
+                      {becomingAdmin ? "..." : "Become admin"}
+                    </button>
+                  )}
                 </form>
               )}
 
