@@ -20,21 +20,25 @@ async function getAuthUser(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  const result = await pool.query("SELECT label, date, type, amount FROM transactions ORDER BY id ASC");
+export async function GET(request: NextRequest) {
+  const authUser = await getAuthUser(request);
+  if (!authUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const result = await pool.query(
+    "SELECT label, date, type, amount FROM transactions WHERE user_id = $1 ORDER BY id ASC",
+    [authUser.userId]
+  );
   return NextResponse.json(result.rows);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get("stratum_token")?.value;
-    if (!token) {
+    const authUser = await getAuthUser(request);
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; email: string; name: string };
-    const userResult = await pool.query("SELECT is_blocked FROM users WHERE id = $1", [decoded.userId]);
-    if (userResult.rows.length > 0 && userResult.rows[0].is_blocked) {
+    if (authUser.isBlocked) {
       return NextResponse.json({ error: "Account blocked" }, { status: 403 });
     }
 
@@ -59,7 +63,7 @@ export async function POST(request: NextRequest) {
     if (type === "Withdrawal") {
       const result = await pool.query(
         `INSERT INTO withdrawals (user_id, amount, wallet_address, status) VALUES ($1, $2, $3, 'pending') RETURNING id, amount, wallet_address, status, created_at`,
-        [decoded.userId, `$${amount.toLocaleString()}`, payoutWalletAddress]
+        [authUser.userId, `$${amount.toLocaleString()}`, payoutWalletAddress]
       );
 
       try {
@@ -103,8 +107,8 @@ export async function POST(request: NextRequest) {
     });
 
     const result = await pool.query(
-      "INSERT INTO transactions (label, date, type, amount) VALUES ($1, $2, $3, $4) RETURNING label, date, type, amount",
-      [label, date, type, formattedAmount]
+      "INSERT INTO transactions (user_id, label, date, type, amount) VALUES ($1, $2, $3, $4, $5) RETURNING label, date, type, amount",
+      [authUser.userId, label, date, type, formattedAmount]
     );
 
     try {

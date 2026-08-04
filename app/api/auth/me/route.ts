@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; email: string; name: string };
 
     const result = await pool.query(
-      "SELECT id, email, name, created_at, crypto_payout_address, two_factor_enabled, is_admin, is_blocked FROM users WHERE id = $1",
+      "SELECT id, email, name, created_at, crypto_payout_address, two_factor_enabled, email_verified, is_admin, is_blocked FROM users WHERE id = $1",
       [decoded.userId]
     );
     if (result.rows.length === 0) {

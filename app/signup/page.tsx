@@ -36,9 +36,17 @@ export default function Signup() {
     const name = String(form.get("name") || "");
     const email = String(form.get("email") || "");
     const password = String(form.get("password") || "");
+    const confirmPassword = String(form.get("confirmPassword") || "");
+    const phone = String(form.get("phone") || "");
+    const country = String(form.get("country") || "");
+    const referralId = String(form.get("referralId") || "");
 
-    if (!name || !email || !password) {
-      setError("Fill in all fields to continue.");
+    if (!name || !email || !password || !confirmPassword || !phone || !country) {
+      setError("Fill in all required fields to continue.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
     if (!agree || !riskAck) {
@@ -52,7 +60,7 @@ export default function Signup() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ name, email, password, phone, country, referralId }),
       });
 
       const data = await res.json();
@@ -62,7 +70,7 @@ export default function Signup() {
         return;
       }
 
-      router.push(data.user?.isAdmin ? "/admin" : "/dashboard");
+      router.push(`/verify?email=${encodeURIComponent(email)}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
@@ -90,6 +98,28 @@ export default function Signup() {
             className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
             placeholder="you@email.com"
           />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Phone number</label>
+            <input
+              name="phone"
+              type="tel"
+              className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
+              placeholder="+1 555 123 4567"
+            />
+          </div>
+
+          <div>
+            <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Country</label>
+            <input
+              name="country"
+              type="text"
+              className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
+              placeholder="United States"
+            />
+          </div>
         </div>
 
         <div>
@@ -127,6 +157,26 @@ export default function Signup() {
               <p className="mt-1.5 font-mono text-[11px]" style={{ color: colors[s] }}>{labels[s]}</p>
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Confirm password</label>
+          <input
+            name="confirmPassword"
+            type={showPw ? "text" : "password"}
+            className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
+            placeholder="Confirm password"
+          />
+        </div>
+
+        <div>
+          <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Referral ID</label>
+          <input
+            name="referralId"
+            type="text"
+            className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
+            placeholder="Referral ID (optional)"
+          />
         </div>
 
         <div className="space-y-3">

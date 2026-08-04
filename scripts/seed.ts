@@ -108,6 +108,7 @@ async function seed() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS holdings (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
         name TEXT NOT NULL,
         code TEXT NOT NULL,
         value TEXT NOT NULL,
@@ -120,6 +121,7 @@ async function seed() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
         label TEXT NOT NULL,
         date TEXT NOT NULL,
         type TEXT NOT NULL,
@@ -130,6 +132,7 @@ async function seed() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS documents (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         date TEXT NOT NULL
@@ -161,6 +164,12 @@ async function seed() {
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         name TEXT NOT NULL,
+        phone TEXT,
+        country TEXT,
+        referral_id TEXT,
+        email_verified BOOLEAN DEFAULT false,
+        verification_code TEXT,
+        verification_code_expires_at TIMESTAMPTZ,
         crypto_payout_address TEXT,
         two_factor_enabled BOOLEAN DEFAULT false,
         is_admin BOOLEAN DEFAULT false,

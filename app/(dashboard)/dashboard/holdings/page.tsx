@@ -1,7 +1,30 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import jwt from "jsonwebtoken";
 import pool from "@/lib/db";
 
+const JWT_SECRET = process.env.JWT_SECRET || "stratum-energy-secret-key-2026";
+
+function getCurrentUser() {
+  const token = cookies().get("stratum_token")?.value;
+  if (!token) return null;
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: number; email: string; name: string };
+  } catch {
+    return null;
+  }
+}
+
 export default async function Holdings() {
-  const result = await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings ORDER BY id ASC");
+  const user = getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const result = await pool.query(
+    "SELECT name, code, value, weight, ytd, units FROM holdings WHERE user_id = $1 ORDER BY id ASC",
+    [user.userId]
+  );
   const holdings = result.rows;
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-12">
@@ -38,7 +61,7 @@ export default async function Holdings() {
         </table>
       </div>
       <p className="mt-6 font-body text-xs text-ink-soft">
-        NAV is calculated at the close of each business day. Figures shown are for demonstration on this preview account.
+        NAV is calculated at the close of each business day. Figures shown are based on your account holdings.
       </p>
     </div>
   );

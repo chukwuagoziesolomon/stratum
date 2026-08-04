@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const result = await pool.query("SELECT id, email, password_hash, name, is_admin FROM users WHERE email = $1", [email]);
+    const result = await pool.query(
+      "SELECT id, email, password_hash, name, is_admin, email_verified FROM users WHERE email = $1",
+      [email]
+    );
     if (result.rows.length === 0) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
@@ -24,11 +27,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    const token = jwt.sign({ userId: user.id, email: user.email, name: user.name, isAdmin: user.is_admin === true }, JWT_SECRET, { expiresIn: "7d" });
+    if (!user.email_verified) {
+      return NextResponse.json({ error: "Email not verified. Please check your inbox for the code." }, { status: 403 });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, name: user.name, isAdmin: user.is_admin === true },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     const response = NextResponse.json({
       success: true,
-      user: { id: user.id, email: user.email, name: user.name, isAdmin: user.is_admin === true },
+      user: { id: user.id, email: user.email, name: user.name, isAdmin: user.is_admin === true, isVerified: true },
       token,
     });
 

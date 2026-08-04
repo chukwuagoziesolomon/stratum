@@ -11,6 +11,15 @@ async function migrate() {
   const client = await pool.connect();
   try {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_id TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code_expires_at TIMESTAMPTZ`);
+    await client.query(`ALTER TABLE holdings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
+    await client.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
+    await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)`);
     
     await client.query(`
       CREATE TABLE IF NOT EXISTS investments (

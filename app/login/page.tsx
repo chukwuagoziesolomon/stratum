@@ -35,6 +35,11 @@ export default function Login() {
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 403 && data.error && data.error.toLowerCase().includes("email not verified")) {
+          router.push(`/verify?email=${encodeURIComponent(email)}`);
+          return;
+        }
+
         setError(data.error || "Invalid email or password.");
         setLoading(false);
         return;

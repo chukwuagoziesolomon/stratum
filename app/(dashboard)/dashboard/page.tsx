@@ -1,5 +1,6 @@
 import { ArrowUpRight, ArrowDownRight, Wallet, Percent, CalendarClock, PiggyBank } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import NavChart from "@/components/NavChart";
 import pool from "@/lib/db";
 import { cookies } from "next/headers";
@@ -20,9 +21,12 @@ function getCurrentUser() {
 
 export default async function DashboardOverview() {
   const user = getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
   const statsResult = await pool.query("SELECT label, value, change, up, icon FROM stats ORDER BY id ASC");
-  const holdings = (await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings ORDER BY id ASC")).rows;
-  const activity = (await pool.query("SELECT label, date, amount FROM transactions ORDER BY id ASC LIMIT 4")).rows;
+  const holdings = (await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings WHERE user_id = $1 ORDER BY id ASC", [user.userId])).rows;
+  const activity = (await pool.query("SELECT label, date, amount FROM transactions WHERE user_id = $1 ORDER BY id ASC LIMIT 4", [user.userId])).rows;
 
   const stats = statsResult.rows.map((s: { label: string; value: string; change: string; up: string; icon: string }) => ({
     label: s.label,
@@ -68,7 +72,7 @@ export default async function DashboardOverview() {
           <div className="lg:col-span-4 rounded-md border border-petrol-line bg-petrol-panel p-8 text-center text-ink-muted">
             <p className="font-display text-lg font-semibold text-ink-high">Dashboard stats are unavailable</p>
             <p className="mt-2 font-body text-sm">
-              There is no live stat data in the database right now. If you want the dashboard to show values, seed the stats table or connect a production data source.
+              No dashboard stats are available for your account right now.
             </p>
           </div>
         )}
@@ -78,7 +82,7 @@ export default async function DashboardOverview() {
         <div className="rounded-md border border-petrol-line bg-petrol-panel p-6 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-base font-semibold text-ink-high">Portfolio value over time</h2>
-            <span className="font-mono text-xs text-ink-soft">Illustrative, last 12 months</span>
+            <span className="font-mono text-xs text-ink-soft">Last 12 months</span>
           </div>
           <div className="mt-4 h-72">
             <NavChart />
@@ -136,7 +140,7 @@ export default async function DashboardOverview() {
       </div>
 
       <p className="mt-6 font-body text-xs text-ink-soft">
-        Figures shown are for demonstration purposes on this preview account. Past performance does not guarantee future results.
+        Figures shown are based on your account data. Past performance does not guarantee future results.
       </p>
     </div>
   );
