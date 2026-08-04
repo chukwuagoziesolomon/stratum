@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
       try {
         await sendEmail({
-          to: decoded.email,
+          to: authUser.email,
           subject: "Withdrawal request received",
           html: `
             <div style="font-family: system-ui, sans-serif; color: #0f0b08; background: #f7f8fb; padding: 24px;">
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
                   <h1 style="margin: 0; font-size: 24px; letter-spacing: 0.02em;">Withdrawal request received</h1>
                 </div>
                 <div style="padding: 28px 32px;">
-                  <p style="margin: 0 0 16px; font-size: 16px;">Hi ${decoded.name || "there"},</p>
+                  <p style="margin: 0 0 16px; font-size: 16px;">Hi ${authUser.name || "there"},</p>
                   <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7;">We have received your withdrawal request for <strong>$${amount.toLocaleString()}</strong>.</p>
                   <div style="background: #f2f5fb; border-radius: 12px; padding: 16px; margin: 0 0 20px;">
                     <p style="margin: 0 0 8px; font-weight: 700;">Details</p>
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     try {
       await sendEmail({
-        to: decoded.email,
+        to: authUser.email,
         subject: "AeroneX Deposit received",
         html: `
           <div style="font-family: system-ui, sans-serif; color: #0f0b08; background: #f7f8fb; padding: 24px;">
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
                 <h1 style="margin: 0; font-size: 24px; letter-spacing: 0.02em;">Deposit received</h1>
               </div>
               <div style="padding: 28px 32px;">
-                <p style="margin: 0 0 16px; font-size: 16px;">Hi ${decoded.name || "there"},</p>
+                <p style="margin: 0 0 16px; font-size: 16px;">Hi ${authUser.name || "there"},</p>
                 <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7;">We have received your deposit request for <strong>${formattedAmount}</strong>.</p>
                 <div style="background: #f2f5fb; border-radius: 12px; padding: 16px; margin: 0 0 20px;">
                   <p style="margin: 0 0 8px; font-weight: 700;">Details</p>
