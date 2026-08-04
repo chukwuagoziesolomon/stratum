@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
               </div>
             </div>
           `,
-          text: `Hi ${decoded.name || "there"},\n\nWe have received your withdrawal request for $${amount.toLocaleString()}.\nYour payout wallet: ${payoutWalletAddress}\nStatus: Pending admin approval\n\nRegards,\nThe AeroneX Team`,
+          text: `Hi ${authUser.name || "there"},\n\nWe have received your withdrawal request for $${amount.toLocaleString()}.\nYour payout wallet: ${payoutWalletAddress}\nStatus: Pending admin approval\n\nRegards,\nThe AeroneX Team`,
         });
       } catch (emailError) {
         console.error("Withdrawal email send failed:", emailError);
