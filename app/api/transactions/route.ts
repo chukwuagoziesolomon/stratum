@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
             </div>
           </div>
         `,
-        text: `Hi ${decoded.name || "there"},\n\nWe have received your deposit request for ${formattedAmount}.\nPlease use the admin deposit wallet address to fund your account.\n\nRegards,\nThe AeroneX Team`,
+        text: `Hi ${authUser.name || "there"},\n\nWe have received your deposit request for ${formattedAmount}.\nPlease use the admin deposit wallet address to fund your account.\n\nRegards,\nThe AeroneX Team`,
       });
     } catch (emailError) {
       console.error("Transaction email send failed:", emailError);
