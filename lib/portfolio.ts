@@ -49,6 +49,36 @@ export async function getAuthenticatedUser(request: NextRequest | Request): Prom
   }
 }
 
+export async function sendDepositDecisionEmail({
+  to,
+  name,
+  amount,
+  status,
+  walletCoin,
+  walletNetwork,
+  reason,
+}: {
+  to: string;
+  name: string;
+  amount: string;
+  status: "approved" | "declined";
+  walletCoin?: string;
+  walletNetwork?: string;
+  reason?: string;
+}) {
+  const subject = status === "approved" ? "Deposit approved" : "Deposit declined";
+  const body = status === "approved"
+    ? `Hi ${name},\n\nYour deposit for ${amount} has been approved and is now available for investment.\nCoin: ${walletCoin || "N/A"}\nNetwork: ${walletNetwork || "N/A"}\n\nRegards,\nThe AeroneX Team`
+    : `Hi ${name},\n\nYour deposit for ${amount} was declined.${reason ? `\nReason: ${reason}` : ""}\n\nRegards,\nThe AeroneX Team`;
+
+  await sendEmail({
+    to,
+    subject,
+    html: `<div style="font-family: system-ui, sans-serif; padding: 24px;"><div style="max-width: 560px; margin: auto; background: white; border-radius: 16px; padding: 24px; border: 1px solid #e7e9ed;"><h2 style="margin-top: 0;">${subject}</h2><p>${status === "approved" ? `Your deposit for ${amount} has been approved and is now available for investment.<br/>Coin: ${walletCoin || "N/A"}<br/>Network: ${walletNetwork || "N/A"}` : `Your deposit for ${amount} was declined.${reason ? `<br/><br/>Reason: ${reason}` : ""}`}</p><p>Regards,<br/>The AeroneX Team</p></div></div>`,
+    text: body,
+  });
+}
+
 export async function syncInvestmentProgress(userId?: number) {
   const result = await pool.query(
     `SELECT id, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, created_at

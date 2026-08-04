@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 
-type Msg = { role: "user" | "assistant"; content: string; reasoning_details?: unknown };
+type Msg = { role: "user" | "assistant"; content: string; reasoning_details?: unknown; fallback?: boolean };
 
 const STARTER: Msg = {
   role: "assistant",
@@ -37,14 +37,27 @@ export default function ChatWidget() {
         body: JSON.stringify({ messages: next }),
       });
       const data = await res.json();
-      setMessages([
-        ...next,
-        {
-          role: "assistant",
-          content: data.reply,
-          reasoning_details: data.reasoningDetails,
-        } as Msg,
-      ]);
+      const assistantMsg: Msg = {
+        role: "assistant",
+        content: data.reply,
+        reasoning_details: data.reasoningDetails,
+        fallback: data.fallback || false,
+      };
+      setMessages([...next, assistantMsg]);
+
+      try {
+        await fetch("/api/chat/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            reply: data.reply,
+            is_from_admin: false,
+          }),
+        });
+      } catch (saveError) {
+        console.error("Failed to save chat message:", saveError);
+      }
     } catch {
       setMessages([
         ...next,
@@ -52,6 +65,7 @@ export default function ChatWidget() {
           role: "assistant",
           content:
             "I'm having trouble connecting right now. Please try again shortly, or reach a human advisor from the Contact page.",
+          fallback: true,
         },
       ]);
     } finally {
@@ -96,10 +110,12 @@ export default function ChatWidget() {
                   className={`max-w-[85%] rounded-md px-3 py-2 font-body text-sm leading-relaxed ${
                     m.role === "user"
                       ? "ml-auto bg-brass text-petrol"
+                      : m.fallback
+                      ? "bg-petrol text-red-400"
                       : "bg-petrol text-ink-high"
                   }`}
                 >
-                      {m.content}
+                  {m.content}
                   {m.reasoning_details ? (
                     <div className="mt-2 rounded-2xl bg-ink-muted/10 px-2 py-1 text-[11px] text-ink-muted">
                       {typeof m.reasoning_details === "string"

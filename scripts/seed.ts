@@ -2,11 +2,16 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 import { Pool } from "pg";
+import bcrypt from "bcryptjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
+
+const DEFAULT_ADMIN_EMAIL = "admin@aeronex.com";
+const DEFAULT_ADMIN_PASSWORD = "Admin123!";
+const DEFAULT_ADMIN_NAME = "Admin User";
 
 async function seed() {
   const client = await pool.connect();
@@ -125,7 +130,11 @@ async function seed() {
         label TEXT NOT NULL,
         date TEXT NOT NULL,
         type TEXT NOT NULL,
-        amount TEXT NOT NULL
+        amount TEXT NOT NULL,
+        status TEXT DEFAULT 'approved',
+        wallet_coin TEXT,
+        wallet_network TEXT,
+        processed_at TIMESTAMP
       )
     `);
 
@@ -200,12 +209,26 @@ async function seed() {
         user_id INTEGER NOT NULL REFERENCES users(id),
         amount TEXT NOT NULL,
         wallet_address TEXT NOT NULL,
+        wallet_coin TEXT,
+        wallet_network TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         reason TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         processed_at TIMESTAMP
       )
     `);
+
+    const existingAdmin = await client.query("SELECT id FROM users WHERE is_admin = true LIMIT 1");
+    if (existingAdmin.rows.length === 0) {
+      const passwordHash = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
+      await client.query(
+        "INSERT INTO users (email, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)",
+        [DEFAULT_ADMIN_EMAIL, passwordHash, DEFAULT_ADMIN_NAME, true]
+      );
+      console.log(`Default admin created: ${DEFAULT_ADMIN_EMAIL} / ${DEFAULT_ADMIN_PASSWORD}`);
+    } else {
+      console.log("Admin already exists. No default admin created.");
+    }
 
     console.log("All tables created. No mock data inserted.");
   } finally {

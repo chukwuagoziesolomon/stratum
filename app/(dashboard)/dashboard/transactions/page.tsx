@@ -24,9 +24,13 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<User>(null);
   const [depositWalletAddress, setDepositWalletAddress] = useState<string | null>(null);
+  const [depositWalletCoin, setDepositWalletCoin] = useState<string>("BNB");
+  const [depositWalletNetwork, setDepositWalletNetwork] = useState<string>("BNB Smart Chain");
   const [activeAction, setActiveAction] = useState<"deposit" | "withdraw" | null>(null);
   const [amount, setAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [withdrawalCoin, setWithdrawalCoin] = useState("BNB");
+  const [withdrawalNetwork, setWithdrawalNetwork] = useState("BNB Smart Chain");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -46,8 +50,16 @@ export default function Transactions() {
 
     fetch('/api/crypto/deposit-wallet')
       .then((r) => r.json())
-      .then((data) => setDepositWalletAddress(data.depositWalletAddress || null))
-      .catch(() => setDepositWalletAddress(null));
+      .then((data) => {
+        setDepositWalletAddress(data.depositWalletAddress || null);
+        setDepositWalletCoin(data.depositWalletCoin || "BNB");
+        setDepositWalletNetwork(data.depositWalletNetwork || "BNB Smart Chain");
+      })
+      .catch(() => {
+        setDepositWalletAddress(null);
+        setDepositWalletCoin("BNB");
+        setDepositWalletNetwork("BNB Smart Chain");
+      });
   }, []);
 
   async function fetchTransactions() {
@@ -86,7 +98,15 @@ export default function Transactions() {
       setError("Your payout wallet address is required to withdraw funds.");
       return;
     }
+    if (action === 'withdraw' && !withdrawalCoin) {
+      setError("Please select the coin for your withdrawal.");
+      return;
+    }
 
+    if (action === 'withdraw' && !withdrawalNetwork) {
+      setError("Please select the network for your withdrawal.");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch('/api/transactions', {
@@ -96,6 +116,8 @@ export default function Transactions() {
           type: action === 'deposit' ? 'Deposit' : 'Withdrawal',
           amount,
           payoutWalletAddress: walletAddress,
+          walletCoin: action === 'deposit' ? depositWalletCoin : withdrawalCoin,
+          walletNetwork: action === 'deposit' ? depositWalletNetwork : withdrawalNetwork,
         }),
       });
       const data = await res.json();
@@ -162,22 +184,56 @@ export default function Transactions() {
                 <div className="mt-3 rounded-sm border border-petrol-line bg-ink-high/5 px-3 py-3 font-mono text-sm text-ink-high">
                   {depositWalletAddress || 'Not configured yet'}
                 </div>
+                <div className="mt-3 space-y-2 text-sm text-ink-soft">
+                  <div><strong>Coin:</strong> {depositWalletCoin}</div>
+                  <div><strong>Network:</strong> {depositWalletNetwork}</div>
+                </div>
               </div>
             )}
 
             {activeAction === 'withdraw' && (
-              <div className="space-y-2">
-                <p className="font-display text-sm font-medium text-ink-high">Your payout wallet</p>
-                <input
-                  type="text"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  placeholder="0x..."
-                  className="w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
-                />
-                <p className="text-sm text-ink-soft">
-                  This is the wallet address where withdrawals and profit distributions will be sent.
-                </p>
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Coin</label>
+                    <select
+                      value={withdrawalCoin}
+                      onChange={(e) => setWithdrawalCoin(e.target.value)}
+                      className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
+                    >
+                      <option value="BNB">BNB</option>
+                      <option value="ETH">ETH</option>
+                      <option value="USDT">USDT</option>
+                      <option value="BTC">BTC</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Network</label>
+                    <select
+                      value={withdrawalNetwork}
+                      onChange={(e) => setWithdrawalNetwork(e.target.value)}
+                      className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
+                    >
+                      <option value="BNB Smart Chain">BNB Smart Chain</option>
+                      <option value="Ethereum">Ethereum</option>
+                      <option value="Polygon">Polygon</option>
+                      <option value="Bitcoin">Bitcoin</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-display text-sm font-medium text-ink-high">Your payout wallet</p>
+                  <input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="0x..."
+                    className="w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
+                  />
+                  <p className="text-sm text-ink-soft">
+                    This is the wallet address where withdrawals and profit distributions will be sent.
+                  </p>
+                </div>
               </div>
             )}
 

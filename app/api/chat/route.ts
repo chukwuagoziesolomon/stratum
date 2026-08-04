@@ -17,7 +17,7 @@ Ground rules:
 - You can explain platform processes (account opening, funding, distributions, statements, 2FA/security, fund minimums, performance reporting) using the information you're given.
 - You cannot give personalized investment, tax, or legal advice. For those, tell the person you are connecting them with a licensed human advisor and suggest the Contact page.
 - If you cannot answer clearly, say so plainly rather than inventing details.
-- If the user needs direct support, say: **I’ll connect you with a human advisor for the next step.**
+- If the user needs direct support, say: **I'll connect you with a human advisor for the next step.**
 - Keep replies under 80 words unless the question genuinely requires more.`;
 
 function serializeMessages(messages: any[]) {
@@ -51,6 +51,20 @@ function parseOpenRouterMessageContent(content: unknown) {
   return "";
 }
 
+function containsUncertainty(reply: string): boolean {
+  const uncertaintyPatterns = [
+    /i'm not sure/i,
+    /i don't know/i,
+    /cannot answer/i,
+    /unable to answer/i,
+    /not sure/i,
+    /unclear/i,
+    /no information/i,
+    /don't have/i,
+  ];
+  return uncertaintyPatterns.some((pattern) => pattern.test(reply));
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
@@ -58,10 +72,8 @@ export async function POST(req: NextRequest) {
     const serializedMessages = serializeMessages(messages || []);
 
     if (!openRouterApiKey) {
-      return NextResponse.json({
-        reply:
-          "Support chat isn't fully configured yet — an OPENROUTER_API_KEY is required on the server.",
-      });
+      const fallback = "Support chat isn't fully configured yet — an OPENROUTER_API_KEY is required on the server.";
+      return NextResponse.json({ reply: fallback, fallback: true });
     }
 
     const lastUserMessage = serializedMessages.length
@@ -70,10 +82,8 @@ export async function POST(req: NextRequest) {
 
     const greetingPattern = /^(hi|hello|hey|good morning|good afternoon|good evening)[.!]?$/;
     if (greetingPattern.test(lastUserMessage)) {
-      return NextResponse.json({
-        reply:
-          "Hello! I'm the Stratum support assistant. How can I help you with your account, funds, or support needs today?",
-      });
+      const greetingReply = "Hello! I'm the AeroneX support assistant. How can I help you with your account, funds, or support needs today?";
+      return NextResponse.json({ reply: greetingReply, fallback: false });
     }
 
     const payload = {
@@ -98,20 +108,25 @@ export async function POST(req: NextRequest) {
       console.error("OpenRouter API error:", errText);
       return NextResponse.json({
         reply: "I'm having trouble reaching support systems right now. Please try again shortly.",
+        fallback: true,
       });
     }
 
     const data = await res.json();
     const message = data?.choices?.[0]?.message;
-    const reply = parseOpenRouterMessageContent(message?.content) ||
+    let reply = parseOpenRouterMessageContent(message?.content) ||
       "Sorry, I didn't catch that — could you rephrase?";
     const reasoningDetails = message?.reasoning_details || message?.reasoningDetails || null;
 
-    return NextResponse.json({ reply, reasoningDetails });
+    if (containsUncertainty(reply)) {
+      reply = "I'm not confident about that answer. I'll connect you with a human advisor who can help with your specific question.";
+    }
+
+    return NextResponse.json({ reply, reasoningDetails, fallback: containsUncertainty(reply) });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { reply: "Something went wrong processing that. Please try again." },
+      { reply: "Something went wrong processing that. Please try again.", fallback: true },
       { status: 200 }
     );
   }

@@ -1,4 +1,4 @@
-import { ArrowUpRight, ArrowDownRight, Wallet, Percent, CalendarClock, PiggyBank } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet, Percent, CalendarClock, PiggyBank, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import NavChart from "@/components/NavChart";
@@ -8,6 +8,14 @@ import jwt from "jsonwebtoken";
 
 const iconMap: Record<string, React.ElementType> = { Wallet, Percent, CalendarClock, PiggyBank };
 const JWT_SECRET = process.env.JWT_SECRET || "stratum-energy-secret-key-2026";
+
+function parseCurrencyValue(value: string) {
+  return Number(String(value).replace(/[^0-9.-]/g, "")) || 0;
+}
+
+function formatCurrency(value: number) {
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function getCurrentUser() {
   const token = cookies().get("stratum_token")?.value;
@@ -26,7 +34,28 @@ export default async function DashboardOverview() {
   }
   const statsResult = await pool.query("SELECT label, value, change, up, icon FROM stats ORDER BY id ASC");
   const holdings = (await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings WHERE user_id = $1 ORDER BY id ASC", [user.userId])).rows;
-  const activity = (await pool.query("SELECT label, date, amount FROM transactions WHERE user_id = $1 ORDER BY id ASC LIMIT 4", [user.userId])).rows;
+  const activity = (await pool.query("SELECT label, date, amount, status FROM transactions WHERE user_id = $1 ORDER BY id ASC LIMIT 4", [user.userId])).rows;
+  const depositTransactions = (await pool.query("SELECT amount, status FROM transactions WHERE user_id = $1 AND type = 'Deposit'", [user.userId])).rows;
+  const approvedWithdrawals = (await pool.query("SELECT amount FROM withdrawals WHERE user_id = $1 AND status = 'approved'", [user.userId])).rows;
+  const approvedInvestments = (await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment' AND status = 'approved'", [user.userId])).rows;
+
+  const approvedDepositTotal = depositTransactions
+    .filter((t: { amount: string; status: string }) => t.status === "approved")
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  const pendingDepositTotal = depositTransactions
+    .filter((t: { amount: string; status: string }) => t.status === "pending")
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  const approvedWithdrawalTotal = approvedWithdrawals
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  const investedTotal = approvedInvestments
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  const holdingsValue = holdings.reduce((sum: number, h: { value: string }) => sum + parseCurrencyValue(h.value), 0);
+  const availableBalance = Math.max(0, approvedDepositTotal - approvedWithdrawalTotal - investedTotal);
+  const totalBalance = availableBalance + holdingsValue;
 
   const stats = statsResult.rows.map((s: { label: string; value: string; change: string; up: string; icon: string }) => ({
     label: s.label,
@@ -52,30 +81,21 @@ export default async function DashboardOverview() {
         </Link>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.length > 0 ? (
-          stats.map((s: { label: string; value: string; change: string; up: boolean | null; icon: React.ElementType }) => (
-            <div key={s.label} className="rounded-md border border-petrol-line bg-petrol-panel p-5">
-              <div className="flex items-center justify-between">
-                <p className="font-body text-sm text-ink-muted">{s.label}</p>
-                <s.icon size={16} className="text-brass" />
-              </div>
-              <p className="mt-3 font-display text-2xl font-semibold text-ink-high">{s.value}</p>
-              <p className={`mt-1 flex items-center gap-1 font-mono text-xs ${s.up === true ? "text-emerald-400" : s.up === false ? "text-red-400" : "text-ink-muted"}`}>
-                {s.up === true && <ArrowUpRight size={12} />}
-                {s.up === false && <ArrowDownRight size={12} />}
-                {s.change}
-              </p>
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          { label: "Available cash", value: formatCurrency(availableBalance), change: "Ready to invest", up: null },
+          { label: "Pending deposits", value: formatCurrency(pendingDepositTotal), change: "Awaiting admin approval", up: null },
+          { label: "Total balance", value: formatCurrency(totalBalance), change: "Holdings + cash", up: null },
+        ].map((s) => (
+          <div key={s.label} className="rounded-md border border-petrol-line bg-petrol-panel p-5">
+            <div className="flex items-center justify-between">
+              <p className="font-body text-sm text-ink-muted">{s.label}</p>
+              <Wallet size={16} className="text-brass" />
             </div>
-          ))
-        ) : (
-          <div className="lg:col-span-4 rounded-md border border-petrol-line bg-petrol-panel p-8 text-center text-ink-muted">
-            <p className="font-display text-lg font-semibold text-ink-high">Dashboard stats are unavailable</p>
-            <p className="mt-2 font-body text-sm">
-              No dashboard stats are available for your account right now.
-            </p>
+            <p className="mt-3 font-display text-2xl font-semibold text-ink-high">{s.value}</p>
+            <p className="mt-1 flex items-center gap-1 font-mono text-xs text-ink-muted">{s.change}</p>
           </div>
-        )}
+        ))}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -89,23 +109,38 @@ export default async function DashboardOverview() {
           </div>
         </div>
 
-        <div className="rounded-md border border-petrol-line bg-petrol-panel p-6">
-          <h2 className="font-display text-base font-semibold text-ink-high">Recent activity</h2>
-          <ul className="mt-4 space-y-4">
-            {activity.map((a: { label: string; date: string; amount: string }) => (
-              <li key={a.label} className="flex items-start justify-between gap-3 border-b border-petrol-line/60 pb-4 last:border-0 last:pb-0">
-                <div>
-                  <p className="font-body text-sm text-ink-high">{a.label}</p>
-                  <p className="font-mono text-xs text-ink-soft">{a.date}</p>
-                </div>
-                <span className={`shrink-0 font-mono text-sm ${a.amount.startsWith("+") ? "text-emerald-400" : "text-ink-muted"}`}>
-                  {a.amount}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div className="space-y-6">
+          <div className="rounded-md border border-petrol-line bg-petrol-panel p-6">
+            <h2 className="font-display text-base font-semibold text-ink-high">Recent activity</h2>
+            <ul className="mt-4 space-y-4">
+              {activity.map((a: { label: string; date: string; amount: string; status?: string }) => (
+                <li key={`${a.label}-${a.date}`} className="flex items-start justify-between gap-3 border-b border-petrol-line/60 pb-4 last:border-0 last:pb-0">
+                  <div>
+                    <p className="font-body text-sm text-ink-high">{a.label}</p>
+                    <p className="font-mono text-xs text-ink-soft">
+                      {a.date}
+                      {a.status === "pending" ? " · Pending approval" : ""}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 font-mono text-sm ${a.amount.startsWith("+") ? "text-emerald-400" : "text-ink-muted"}`}>
+                    {a.amount}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <Link
+            href="/dashboard/invest"
+            className="mt-4 flex items-center justify-center gap-2 rounded-sm border border-brass/50 bg-brass/10 py-4 font-display text-sm font-medium text-brass hover:bg-brass/15"
+          >
+            <TrendingUp size={16} />
+            Browse investment opportunities
+          </Link>
         </div>
       </div>
+
+
 
       <div className="mt-6 overflow-hidden rounded-md border border-petrol-line bg-petrol-panel">
         <div className="flex items-center justify-between p-6 pb-0">

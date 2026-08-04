@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import jwt from "jsonwebtoken";
 import pool from "@/lib/db";
 import AdminClient from "@/components/AdminClient";
+import DepositActions from "@/components/DepositActions";
 import InvestmentForm from "@/components/InvestmentForm";
 import WithdrawalActions from "@/components/WithdrawalActions";
+import ChatAdmin from "@/components/ChatAdmin";
 
 const JWT_SECRET = process.env.JWT_SECRET || "stratum-energy-secret-key-2026";
 
@@ -31,10 +33,12 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const [usersRes, investmentsRes, withdrawalsRes] = await Promise.all([
+  const [usersRes, investmentsRes, withdrawalsRes, depositsRes, chatRes] = await Promise.all([
     pool.query("SELECT id, email, name, is_admin, is_blocked, created_at FROM users ORDER BY created_at DESC"),
     pool.query(`SELECT i.id, i.user_id, u.name as user_name, i.program_code, i.amount, i.current_percentage, i.target_percentage, i.auto_increment_interval_hours, i.last_increment_at, i.status, i.created_at, i.completed_at FROM investments i JOIN users u ON i.user_id = u.id ORDER BY i.created_at DESC`),
     pool.query(`SELECT w.id, w.user_id, u.name as user_name, u.email as user_email, w.amount, w.wallet_address, w.status, w.reason, w.created_at, w.processed_at FROM withdrawals w JOIN users u ON w.user_id = u.id ORDER BY w.created_at DESC`),
+    pool.query(`SELECT t.id, t.user_id, u.name as user_name, u.email as user_email, t.amount, t.date, t.wallet_coin, t.wallet_network, t.status FROM transactions t JOIN users u ON t.user_id = u.id WHERE t.type = 'Deposit' AND t.status = 'pending' ORDER BY t.id DESC`),
+    pool.query(`SELECT id, user_id, user_name, user_email, message, reply, is_from_admin, created_at FROM chat_messages ORDER BY created_at DESC LIMIT 50`),
   ]);
 
   return (
@@ -134,11 +138,14 @@ export default async function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="font-body text-sm">
-                  {withdrawalsRes.rows.map((w: { id: number; user_name: string; amount: string; wallet_address: string; status: string }) => (
+                  {withdrawalsRes.rows.map((w: { id: number; user_name: string; amount: string; wallet_address: string; wallet_coin?: string; wallet_network?: string; status: string }) => (
                     <tr key={w.id} className="border-t border-petrol-line/60">
                       <td className="px-4 py-3 text-ink-high">{w.user_name}</td>
                       <td className="px-4 py-3 text-ink-muted">{w.amount}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-ink-soft">{w.wallet_address}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-ink-soft">
+                        <div>{w.wallet_address}</div>
+                        <div className="text-ink-muted">{w.wallet_coin || "BNB"} / {w.wallet_network || "BNB Smart Chain"}</div>
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`font-mono text-xs ${w.status === "approved" ? "text-emerald-400" : w.status === "declined" ? "text-red-400" : "text-brass"}`}>
                           {w.status}
@@ -153,6 +160,45 @@ export default async function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-petrol-line bg-petrol-panel p-6">
+            <h2 className="font-display text-lg font-semibold text-ink-high">Pending deposits</h2>
+            <p className="mt-1 font-body text-sm text-ink-muted">Approve or decline user deposit requests.</p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="font-mono text-xs uppercase tracking-wider text-ink-soft">
+                    <th className="px-4 py-3 font-medium">User</th>
+                    <th className="px-4 py-3 font-medium">Amount</th>
+                    <th className="px-4 py-3 font-medium">Coin / Network</th>
+                    <th className="px-4 py-3 font-medium">Date</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="font-body text-sm">
+                  {depositsRes.rows.map((d: { id: number; user_name: string; amount: string; wallet_coin?: string; wallet_network?: string; date: string }) => (
+                    <tr key={d.id} className="border-t border-petrol-line/60">
+                      <td className="px-4 py-3 text-ink-high">{d.user_name}</td>
+                      <td className="px-4 py-3 text-ink-muted">{d.amount}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-ink-soft">{d.wallet_coin || "BNB"} / {d.wallet_network || "BNB Smart Chain"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-ink-soft">{d.date}</td>
+                      <td className="px-4 py-3">
+                        <DepositActions id={d.id} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-petrol-line bg-petrol-panel p-6">
+            <h2 className="font-display text-lg font-semibold text-ink-high">Support chat</h2>
+            <p className="mt-1 font-body text-sm text-ink-muted">View and reply to user chat messages.</p>
+            <div className="mt-4">
+              <ChatAdmin chats={chatRes.rows} />
             </div>
           </section>
         </div>

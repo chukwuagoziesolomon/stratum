@@ -8,8 +8,10 @@ const pool = new Pool({
 });
 
 async function check() {
-  const result = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position");
-  console.log(JSON.stringify(result.rows, null, 2));
+  const t = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'transactions' ORDER BY ordinal_position");
+  console.log("transactions:", JSON.stringify(t.rows, null, 2));
+  const h = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'holdings' ORDER BY ordinal_position");
+  console.log("holdings:", JSON.stringify(h.rows, null, 2));
   await pool.end();
 }
 

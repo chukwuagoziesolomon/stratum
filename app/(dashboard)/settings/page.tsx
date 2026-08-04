@@ -70,20 +70,24 @@ function Field({ label, value, type = "text", onChange }: { label: string; value
 export default function Settings() {
     const [tab, setTab] = useState("profile");
   const [saved, setSaved] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; crypto_payout_address?: string; two_factor_enabled?: boolean; is_admin?: boolean } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; phone?: string; country?: string; crypto_payout_address?: string; two_factor_enabled?: boolean; is_admin?: boolean } | null>(null);
   const [payoutAddress, setPayoutAddress] = useState("");
   const [depositWalletAddress, setDepositWalletAddress] = useState<string | null>(null);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [hasAdmins, setHasAdmins] = useState(false);
-  const [becomingAdmin, setBecomingAdmin] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: "", phone: "", country: "" });
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/profile")
       .then(r => r.json())
       .then(data => {
         if (data.user) {
           setUser(data.user);
+          setProfileForm({
+            name: data.user.name || "",
+            phone: data.user.phone || "",
+            country: data.user.country || "",
+          });
           setPayoutAddress(data.user.crypto_payout_address || "");
           setTwoFactorEnabled(Boolean(data.user.two_factor_enabled));
         }
@@ -94,26 +98,31 @@ export default function Settings() {
       .then(r => r.json())
       .then(data => setDepositWalletAddress(data.depositWalletAddress || null))
       .catch(() => setDepositWalletAddress(null));
-
-    fetch("/api/admin/status")
-      .then(r => r.json())
-      .then(data => setHasAdmins(data.hasAdmins))
-      .catch(() => {});
   }, []);
-
-  async function handleBecomeAdmin() {
-    setBecomingAdmin(true);
-    const res = await fetch("/api/admin/become", { method: "POST" });
-    if (res.ok) {
-      window.location.reload();
-    } else {
-      setBecomingAdmin(false);
-    }
-  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaveError(null);
+
+    if (tab === "profile") {
+      try {
+        const res = await fetch("/api/auth/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(profileForm),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Unable to update profile.");
+        }
+        setUser((prev) => (prev ? { ...prev, ...profileForm } : prev));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2200);
+      } catch (error: any) {
+        setSaveError(error.message);
+      }
+      return;
+    }
 
     if (tab === "security") {
       try {
@@ -195,22 +204,13 @@ export default function Settings() {
                 <form onSubmit={handleSave} className="space-y-5">
                   <h2 className="font-display text-lg font-semibold text-ink-high">Profile</h2>
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Field label="Full name" value={user?.name || ""} />
+                    <Field label="Full name" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} />
                     <Field label="Email" value={user?.email || ""} type="email" />
-                    <Field label="Phone" value="+61 400 555 123" />
-                    <Field label="Country" value="Australia" />
+                    <Field label="Phone" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
+                    <Field label="Country" value={profileForm.country} onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })} />
                   </div>
+                  {saveError && <p className="font-body text-sm text-red-400">{saveError}</p>}
                   <SaveButton saved={saved} />
-                  {!user?.is_admin && !hasAdmins && (
-                    <button
-                      type="button"
-                      onClick={handleBecomeAdmin}
-                      disabled={becomingAdmin}
-                      className="rounded-sm border border-brass/60 px-5 py-2.5 font-display text-sm text-brass hover:bg-brass/10 disabled:opacity-50"
-                    >
-                      {becomingAdmin ? "..." : "Become admin"}
-                    </button>
-                  )}
                 </form>
               )}
 

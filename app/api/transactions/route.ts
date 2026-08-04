@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const result = await pool.query(
-    "SELECT label, date, type, amount FROM transactions WHERE user_id = $1 ORDER BY id ASC",
+    "SELECT label, date, type, amount, status, wallet_coin, wallet_network FROM transactions WHERE user_id = $1 ORDER BY id ASC",
     [authUser.userId]
   );
   return NextResponse.json(result.rows);
@@ -46,9 +46,16 @@ export async function POST(request: NextRequest) {
     const amountStr = String(body.amount || "").trim();
     const type = body.type === "Withdrawal" ? "Withdrawal" : "Deposit";
     const payoutWalletAddress = String(body.payoutWalletAddress || "").trim();
+    let walletCoin = String(body.walletCoin || "").trim();
+    let walletNetwork = String(body.walletNetwork || "").trim();
 
     if (!amountStr) {
       return NextResponse.json({ error: "Amount is required" }, { status: 400 });
+    }
+
+    if (type === "Deposit") {
+      walletCoin = process.env.CRYPTO_DEPOSIT_WALLET_COIN || "BNB";
+      walletNetwork = process.env.CRYPTO_DEPOSIT_WALLET_NETWORK || "BNB Smart Chain";
     }
 
     const amount = Number(amountStr.replace(/[^0-9.-]/g, ""));
@@ -60,10 +67,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Payout wallet address is required for withdrawals" }, { status: 400 });
     }
 
+    if (type === "Withdrawal" && !walletCoin) {
+      return NextResponse.json({ error: "Withdrawal coin is required" }, { status: 400 });
+    }
+
+    if (type === "Withdrawal" && !walletNetwork) {
+      return NextResponse.json({ error: "Withdrawal network is required" }, { status: 400 });
+    }
+
+    if (type === "Deposit" && (!walletCoin || !walletNetwork)) {
+      return NextResponse.json({ error: "Deposit coin and network are required" }, { status: 500 });
+    }
+
     if (type === "Withdrawal") {
       const result = await pool.query(
-        `INSERT INTO withdrawals (user_id, amount, wallet_address, status) VALUES ($1, $2, $3, 'pending') RETURNING id, amount, wallet_address, status, created_at`,
-        [authUser.userId, `$${amount.toLocaleString()}`, payoutWalletAddress]
+        `INSERT INTO withdrawals (user_id, amount, wallet_address, wallet_coin, wallet_network, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id, amount, wallet_address, wallet_coin, wallet_network, status, created_at`,
+        [authUser.userId, `$${amount.toLocaleString()}`, payoutWalletAddress, walletCoin, walletNetwork]
       );
 
       try {
@@ -89,7 +108,7 @@ export async function POST(request: NextRequest) {
               </div>
             </div>
           `,
-          text: `Hi ${authUser.name || "there"},\n\nWe have received your withdrawal request for $${amount.toLocaleString()}.\nYour payout wallet: ${payoutWalletAddress}\nStatus: Pending admin approval\n\nRegards,\nThe AeroneX Team`,
+          text: `Hi ${authUser.name || "there"},\n\nWe have received your withdrawal request for $${amount.toLocaleString()}.\nYour payout wallet: ${payoutWalletAddress}\nCoin: ${walletCoin}\nNetwork: ${walletNetwork}\nStatus: Pending admin approval\n\nRegards,\nThe AeroneX Team`,
         });
       } catch (emailError) {
         console.error("Withdrawal email send failed:", emailError);
@@ -98,7 +117,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, withdrawal: result.rows[0] });
     }
 
-    const label = "Deposit via crypto";
+    const label = "Deposit request";
     const formattedAmount = "+" + formatCurrency(amount);
     const date = new Date().toLocaleDateString("en-US", {
       month: "short",
@@ -107,8 +126,8 @@ export async function POST(request: NextRequest) {
     });
 
     const result = await pool.query(
-      "INSERT INTO transactions (user_id, label, date, type, amount) VALUES ($1, $2, $3, $4, $5) RETURNING label, date, type, amount",
-      [authUser.userId, label, date, type, formattedAmount]
+      `INSERT INTO transactions (user_id, label, date, type, amount, status, wallet_coin, wallet_network) VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7) RETURNING label, date, type, amount, status, wallet_coin, wallet_network`,
+      [authUser.userId, label, date, type, formattedAmount, walletCoin, walletNetwork]
     );
 
     try {
@@ -126,7 +145,9 @@ export async function POST(request: NextRequest) {
                 <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7;">We have received your deposit request for <strong>${formattedAmount}</strong>.</p>
                 <div style="background: #f2f5fb; border-radius: 12px; padding: 16px; margin: 0 0 20px;">
                   <p style="margin: 0 0 8px; font-weight: 700;">Details</p>
-                  <p style="margin: 0; font-size: 15px; line-height: 1.6;">Please use the admin deposit wallet address to fund your account.</p>
+                  <p style="margin: 0; font-size: 15px; line-height: 1.6;">Please send funds to the admin deposit wallet address. Your deposit will remain pending until approved by an administrator.</p>
+                  <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6;">Coin: ${walletCoin}</p>
+                  <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6;">Network: ${walletNetwork}</p>
                 </div>
                 <p style="margin: 0; font-size: 16px;">Regards,<br/>The AeroneX Team</p>
               </div>

@@ -11,14 +11,15 @@ import {
   FileText,
   Settings,
   LogOut,
-  Droplet,
   Menu,
   X,
   ShieldCheck,
+  TrendingUp,
 } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutGrid },
+  { href: "/dashboard/invest", label: "Invest", icon: TrendingUp },
   { href: "/dashboard/holdings", label: "Holdings", icon: Wallet },
   { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
@@ -52,8 +53,8 @@ export default function Sidebar() {
   const content = (
     <div className="flex h-full flex-col">
       <Link href="/" className="flex items-center gap-2 px-6 py-6 font-display text-base font-semibold text-ink-high">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
-          <Droplet size={16} strokeWidth={2.5} />
+        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-brass/60 text-brass">
+          <img src="/logo.png" alt="AeroneX" className="h-8 w-8 object-contain" />
         </span>
         AeroneX
       </Link>
@@ -123,8 +124,8 @@ export default function Sidebar() {
       {/* Mobile top bar */}
       <div className="flex items-center justify-between border-b border-petrol-line bg-petrol px-4 py-3 md:hidden">
         <Link href="/" className="flex items-center gap-2 font-display text-sm font-semibold text-ink-high">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-brass/60 text-brass">
-            <Droplet size={14} strokeWidth={2.5} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
+            <img src="/logo.png" alt="AeroneX" className="h-6 w-6 object-contain" />
           </span>
           AeroneX
         </Link>

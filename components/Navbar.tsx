@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Droplet } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const links = [
   { href: "/about", label: "About" },
@@ -27,9 +27,9 @@ export default function Navbar() {
       </div>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold uppercase tracking-tight text-ink-high">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
-            <Droplet size={16} strokeWidth={2.5} />
-          </span>
+        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-brass/60 text-brass">
+          <img src="/logo.png" alt="AeroneX" className="h-8 w-8 object-contain" />
+        </span>
           AeroneX Oil & Gas
         </Link>
 

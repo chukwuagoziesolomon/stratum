@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Droplet } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -8,8 +7,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2 font-display text-lg font-semibold text-ink-high">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
-                <Droplet size={16} strokeWidth={2.5} />
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-brass/60 text-brass">
+                <img src="/logo.png" alt="AeroneX" className="h-8 w-8 object-contain" />
               </span>
               AeroneX
             </div>

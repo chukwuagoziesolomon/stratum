@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Droplet, ShieldCheck, Fuel } from "lucide-react";
+import { ShieldCheck, Fuel } from "lucide-react";
 import { ReactNode } from "react";
 import RigIllustration from "./RigIllustration";
 
@@ -18,8 +18,8 @@ export default function AuthLayout({
       <div className="flex items-center justify-center px-6 py-16 md:px-16">
         <div className="w-full max-w-sm">
           <Link href="/" className="flex items-center gap-2 font-display text-base font-semibold uppercase text-ink-high">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brass/60 text-brass">
-              <Droplet size={16} strokeWidth={2.5} />
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-brass/60 text-brass">
+              <img src="/logo.png" alt="AeroneX" className="h-8 w-8 object-contain" />
             </span>
             AeroneX
           </Link>

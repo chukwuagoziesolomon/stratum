@@ -2,9 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import jwt from "jsonwebtoken";
 import pool from "@/lib/db";
-import { syncInvestmentProgress, sendWithdrawalDecisionEmail } from "@/lib/portfolio";
 
 const JWT_SECRET = process.env.JWT_SECRET || "stratum-energy-secret-key-2026";
+
+function parseCurrencyValue(value: string) {
+  return Number(String(value).replace(/[^0-9.-]/g, "")) || 0;
+}
+
+async function getAvailableCash(userId: number) {
+  const depositRes = await pool.query("SELECT amount, status FROM transactions WHERE user_id = $1 AND type = 'Deposit'", [userId]);
+  const approvedDepositTotal = depositRes.rows
+    .filter((t: { amount: string; status: string }) => t.status === "approved")
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  const withdrawalRes = await pool.query("SELECT amount FROM withdrawals WHERE user_id = $1 AND status = 'approved'", [userId]);
+  const approvedWithdrawalTotal = withdrawalRes.rows
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  const investmentRes = await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment' AND status = 'approved'", [userId]);
+  const investedTotal = investmentRes.rows
+    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+
+  return Math.max(0, approvedDepositTotal - approvedWithdrawalTotal - investedTotal);
+}
 
 async function getAuthUser(request: NextRequest) {
   const token = request.cookies.get("stratum_token")?.value;
@@ -43,13 +63,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
   }
 
-  const result = await pool.query(
+  const availableCash = await getAvailableCash(user.userId);
+  if (numericAmount > availableCash) {
+    return NextResponse.json({ error: "Insufficient available balance to purchase this investment" }, { status: 400 });
+  }
+
+  const investmentResult = await pool.query(
     `INSERT INTO investments (user_id, program_code, amount, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, status)
      VALUES ($1, $2, $3, 1, 100, 24, CURRENT_TIMESTAMP, 'active') RETURNING id, user_id, program_code, amount, current_percentage, target_percentage, status, created_at`,
     [user.userId, programCode, `$${numericAmount.toLocaleString()}`]
   );
 
-  return NextResponse.json({ success: true, investment: result.rows[0] });
+  const date = new Date().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  await pool.query(
+    `INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'approved')`,
+    [user.userId, `Investment ${programCode}`, date, "Investment", `-$${numericAmount.toLocaleString()}`]
+  );
+
+  return NextResponse.json({ success: true, investment: investmentResult.rows[0] });
 }
 
 export async function GET(request: NextRequest) {

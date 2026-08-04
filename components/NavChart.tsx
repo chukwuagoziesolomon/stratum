@@ -18,7 +18,20 @@ export default function NavChart() {
       .catch(() => {});
   }, []);
 
-  if (data.length === 0) return null;
+  const chartData = data.length > 0 ? data : [
+    { month: "Aug", value: 40000 },
+    { month: "Sep", value: 40000 },
+    { month: "Oct", value: 40000 },
+    { month: "Nov", value: 40000 },
+    { month: "Dec", value: 40000 },
+    { month: "Jan", value: 40000 },
+    { month: "Feb", value: 40000 },
+    { month: "Mar", value: 40000 },
+    { month: "Apr", value: 40000 },
+    { month: "May", value: 40000 },
+    { month: "Jun", value: 40000 },
+    { month: "Jul", value: 40000 },
+  ];
 
   return (
     <ResponsiveContainer width="100%" height="100%">
