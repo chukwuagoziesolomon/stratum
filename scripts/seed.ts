@@ -9,7 +9,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-const DEFAULT_ADMIN_EMAIL = "admin@aeronex.com";
+const DEFAULT_ADMIN_EMAIL = "silverann83@gmail.com";
 const DEFAULT_ADMIN_PASSWORD = "Admin123!";
 const DEFAULT_ADMIN_NAME = "Admin User";
 
@@ -222,8 +222,8 @@ async function seed() {
     if (existingAdmin.rows.length === 0) {
       const passwordHash = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
       await client.query(
-        "INSERT INTO users (email, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)",
-        [DEFAULT_ADMIN_EMAIL, passwordHash, DEFAULT_ADMIN_NAME, true]
+        "INSERT INTO users (email, password_hash, name, is_admin, email_verified) VALUES ($1, $2, $3, $4, $5)",
+        [DEFAULT_ADMIN_EMAIL, passwordHash, DEFAULT_ADMIN_NAME, true, true]
       );
       console.log(`Default admin created: ${DEFAULT_ADMIN_EMAIL} / ${DEFAULT_ADMIN_PASSWORD}`);
     } else {
