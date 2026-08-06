@@ -9,6 +9,10 @@ function parseCurrencyValue(value: string) {
   return Number(String(value).replace(/[^0-9.-]/g, "")) || 0;
 }
 
+function absoluteCurrencyValue(value: string) {
+  return Math.abs(parseCurrencyValue(value));
+}
+
 async function getAvailableCash(userId: number) {
   const depositRes = await pool.query("SELECT amount, status FROM transactions WHERE user_id = $1 AND type = 'Deposit'", [userId]);
   const approvedDepositTotal = depositRes.rows
@@ -21,7 +25,7 @@ async function getAvailableCash(userId: number) {
 
   const investmentRes = await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment' AND status = 'approved'", [userId]);
   const investedTotal = investmentRes.rows
-    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+    .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
   return Math.max(0, approvedDepositTotal - approvedWithdrawalTotal - investedTotal);
 }

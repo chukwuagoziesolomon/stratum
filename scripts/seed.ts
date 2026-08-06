@@ -176,6 +176,7 @@ async function seed() {
         phone TEXT,
         country TEXT,
         referral_id TEXT,
+        referral_code TEXT UNIQUE,
         email_verified BOOLEAN DEFAULT false,
         verification_code TEXT,
         verification_code_expires_at TIMESTAMPTZ,

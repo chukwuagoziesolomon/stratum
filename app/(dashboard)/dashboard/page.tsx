@@ -13,6 +13,35 @@ function parseCurrencyValue(value: string) {
   return Number(String(value).replace(/[^0-9.-]/g, "")) || 0;
 }
 
+function absoluteCurrencyValue(value: string) {
+  return Math.abs(parseCurrencyValue(value));
+}
+
+function createReferralCode() {
+  return `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+async function ensureReferralCode(userId: number) {
+  const existing = await pool.query("SELECT referral_code FROM users WHERE id = $1", [userId]);
+  if (existing.rows.length > 0 && existing.rows[0].referral_code) {
+    return existing.rows[0].referral_code;
+  }
+
+  let referralCode = createReferralCode();
+  let tryCount = 0;
+  while (tryCount < 5) {
+    const duplicate = await pool.query("SELECT id FROM users WHERE referral_code = $1", [referralCode]);
+    if (duplicate.rows.length === 0) {
+      break;
+    }
+    referralCode = createReferralCode();
+    tryCount += 1;
+  }
+
+  await pool.query("UPDATE users SET referral_code = $1 WHERE id = $2", [referralCode, userId]);
+  return referralCode;
+}
+
 function formatCurrency(value: number) {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -35,23 +64,27 @@ export default async function DashboardOverview() {
   const statsResult = await pool.query("SELECT label, value, change, up, icon FROM stats ORDER BY id ASC");
   const holdings = (await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings WHERE user_id = $1 ORDER BY id ASC", [user.userId])).rows;
   const activity = (await pool.query("SELECT label, date, amount, status FROM transactions WHERE user_id = $1 ORDER BY id ASC LIMIT 4", [user.userId])).rows;
+  const referralRow = (await pool.query("SELECT referral_code, referral_id FROM users WHERE id = $1", [user.userId])).rows[0] || {};
+  const referralCode = referralRow.referral_code || (await ensureReferralCode(user.userId));
+  const referredBy = referralRow.referral_id;
+  const referralLink = `/signup?referralId=${referralCode}`;
   const depositTransactions = (await pool.query("SELECT amount, status FROM transactions WHERE user_id = $1 AND type = 'Deposit'", [user.userId])).rows;
   const approvedWithdrawals = (await pool.query("SELECT amount FROM withdrawals WHERE user_id = $1 AND status = 'approved'", [user.userId])).rows;
   const approvedInvestments = (await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment' AND status = 'approved'", [user.userId])).rows;
 
   const approvedDepositTotal = depositTransactions
     .filter((t: { amount: string; status: string }) => t.status === "approved")
-    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+    .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
   const pendingDepositTotal = depositTransactions
     .filter((t: { amount: string; status: string }) => t.status === "pending")
-    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+    .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
   const approvedWithdrawalTotal = approvedWithdrawals
-    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+    .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
   const investedTotal = approvedInvestments
-    .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
+    .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
   const holdingsValue = holdings.reduce((sum: number, h: { value: string }) => sum + parseCurrencyValue(h.value), 0);
   const availableBalance = Math.max(0, approvedDepositTotal - approvedWithdrawalTotal - investedTotal);
@@ -96,6 +129,21 @@ export default async function DashboardOverview() {
             <p className="mt-1 flex items-center gap-1 font-mono text-xs text-ink-muted">{s.change}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 rounded-md border border-petrol-line bg-petrol-panel p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="font-display text-base font-semibold text-ink-high">Your referral link</h2>
+            <p className="mt-1 font-body text-sm text-ink-muted">Share this link so new users can sign up with your referral code.</p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-md border border-petrol-line/70 bg-petrol px-4 py-3 font-mono text-sm text-ink-high break-all">
+          {referralLink}
+        </div>
+        {referredBy && (
+          <p className="mt-3 text-sm text-ink-muted">Referred by code: {referredBy}</p>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">

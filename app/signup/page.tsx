@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, Check } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
@@ -21,12 +21,15 @@ const colors = ["#6E6459", "#D99A3D", "#D99A3D", "#EDB35C", "#FF6B35"];
 
 export default function Signup() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialReferral = searchParams.get("referralId") || "";
   const [showPw, setShowPw] = useState(false);
   const [pw, setPw] = useState("");
   const [agree, setAgree] = useState(false);
   const [riskAck, setRiskAck] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [referralId, setReferralId] = useState(initialReferral);
 
   const s = strength(pw);
 
@@ -174,9 +177,16 @@ export default function Signup() {
           <input
             name="referralId"
             type="text"
+            value={referralId}
+            onChange={(e) => setReferralId(e.target.value)}
             className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
             placeholder="Referral ID (optional)"
           />
+          {initialReferral && (
+            <p className="mt-2 font-body text-sm text-emerald-400">
+              You&apos;re signing up with a referral code.
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">

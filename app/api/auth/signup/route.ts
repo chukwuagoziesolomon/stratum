@@ -9,6 +9,24 @@ function createVerificationCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+function createReferralCode() {
+  return `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+async function generateReferralCode() {
+  let referralCode = createReferralCode();
+  let tries = 0;
+  while (tries < 5) {
+    const existing = await pool.query("SELECT id FROM users WHERE referral_code = $1", [referralCode]);
+    if (existing.rows.length === 0) {
+      return referralCode;
+    }
+    referralCode = createReferralCode();
+    tries += 1;
+  }
+  return `${referralCode}-${Date.now().toString().slice(-4)}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, name, phone, country, referralId } = await request.json();
@@ -24,10 +42,19 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationCode = createVerificationCode();
+    const referralCode = await generateReferralCode();
+
+    let validReferralId = referralId ? String(referralId).trim() : null;
+    if (validReferralId) {
+      const referrer = await pool.query("SELECT id FROM users WHERE referral_code = $1", [validReferralId]);
+      if (referrer.rows.length === 0) {
+        validReferralId = null;
+      }
+    }
 
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash, name, phone, country, referral_id, email_verified, verification_code, verification_code_expires_at) VALUES ($1, $2, $3, $4, $5, $6, false, $7, NOW() + INTERVAL '15 minutes') RETURNING id, email, name",
-      [email, passwordHash, name, phone, country, referralId || null, verificationCode]
+      "INSERT INTO users (email, password_hash, name, phone, country, referral_id, referral_code, email_verified, verification_code, verification_code_expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8, NOW() + INTERVAL '15 minutes') RETURNING id, email, name",
+      [email, passwordHash, name, phone, country, validReferralId, referralCode, verificationCode]
     );
 
     const user = result.rows[0];
