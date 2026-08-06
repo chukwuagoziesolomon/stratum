@@ -5,6 +5,7 @@ import pool from "@/lib/db";
 import AdminClient from "@/components/AdminClient";
 import DepositActions from "@/components/DepositActions";
 import InvestmentForm from "@/components/InvestmentForm";
+import InvestmentApprovalActions from "@/components/InvestmentApprovalActions";
 import WithdrawalActions from "@/components/WithdrawalActions";
 import ChatAdmin from "@/components/ChatAdmin";
 
@@ -33,9 +34,10 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const [usersRes, investmentsRes, withdrawalsRes, depositsRes, chatRes] = await Promise.all([
+  const [usersRes, activeInvestmentsRes, pendingInvestmentsRes, withdrawalsRes, depositsRes, chatRes] = await Promise.all([
     pool.query("SELECT id, email, name, is_admin, is_blocked, created_at FROM users ORDER BY created_at DESC"),
-    pool.query(`SELECT i.id, i.user_id, u.name as user_name, i.program_code, i.amount, i.current_percentage, i.target_percentage, i.auto_increment_interval_hours, i.last_increment_at, i.status, i.created_at, i.completed_at FROM investments i JOIN users u ON i.user_id = u.id ORDER BY i.created_at DESC`),
+    pool.query(`SELECT i.id, i.user_id, u.name as user_name, i.program_code, i.amount, i.current_percentage, i.target_percentage, i.auto_increment_interval_hours, i.last_increment_at, i.status, i.created_at, i.completed_at FROM investments i JOIN users u ON i.user_id = u.id WHERE i.status IN ('active', 'completed') ORDER BY i.created_at DESC`),
+    pool.query(`SELECT i.id, i.user_id, u.name as user_name, i.program_code, i.amount, i.current_percentage, i.target_percentage, i.auto_increment_interval_hours, i.last_increment_at, i.status, i.created_at, i.completed_at FROM investments i JOIN users u ON i.user_id = u.id WHERE i.status = 'pending' ORDER BY i.created_at DESC`),
     pool.query(`SELECT w.id, w.user_id, u.name as user_name, u.email as user_email, w.amount, w.wallet_address, w.status, w.reason, w.created_at, w.processed_at FROM withdrawals w JOIN users u ON w.user_id = u.id ORDER BY w.created_at DESC`),
     pool.query(`SELECT t.id, t.user_id, u.name as user_name, u.email as user_email, t.amount, t.date, t.wallet_coin, t.wallet_network, t.status FROM transactions t JOIN users u ON t.user_id = u.id WHERE t.type = 'Deposit' AND t.status = 'pending' ORDER BY t.id DESC`),
     pool.query(`SELECT id, user_id, user_name, user_email, message, reply, is_from_admin, created_at FROM chat_messages ORDER BY created_at DESC LIMIT 50`),
@@ -87,6 +89,41 @@ export default async function AdminPage() {
           </section>
 
           <section className="rounded-md border border-petrol-line bg-petrol-panel p-6">
+            <h2 className="font-display text-lg font-semibold text-ink-high">Pending investment approvals</h2>
+            <p className="mt-1 font-body text-sm text-ink-muted">Approve or decline new investment requests.</p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="font-mono text-xs uppercase tracking-wider text-ink-soft">
+                    <th className="px-4 py-3 font-medium">User</th>
+                    <th className="px-4 py-3 font-medium">Program</th>
+                    <th className="px-4 py-3 font-medium">Amount</th>
+                    <th className="px-4 py-3 font-medium">Requested</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="font-body text-sm">
+                  {pendingInvestmentsRes.rows.map((inv: { id: number; user_name: string; program_code: string; amount: string; current_percentage: number; target_percentage: number; status: string }) => (
+                    <tr key={inv.id} className="border-t border-petrol-line/60">
+                      <td className="px-4 py-3 text-ink-high">{inv.user_name}</td>
+                      <td className="px-4 py-3 text-ink-muted">{inv.program_code}</td>
+                      <td className="px-4 py-3 text-ink-muted">{inv.amount}</td>
+                      <td className="px-4 py-3 text-ink-high">{inv.current_percentage}% / {inv.target_percentage}%</td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs text-brass">{inv.status}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <InvestmentApprovalActions id={inv.id} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-petrol-line bg-petrol-panel p-6">
             <h2 className="font-display text-lg font-semibold text-ink-high">Investments</h2>
             <p className="mt-1 font-body text-sm text-ink-muted">Manually update investment progress.</p>
             <div className="mt-4 overflow-x-auto">
@@ -102,7 +139,7 @@ export default async function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="font-body text-sm">
-                  {investmentsRes.rows.map((inv: { id: number; user_name: string; program_code: string; amount: string; current_percentage: number; target_percentage: number; status: string }) => (
+                  {activeInvestmentsRes.rows.map((inv: { id: number; user_name: string; program_code: string; amount: string; current_percentage: number; target_percentage: number; status: string }) => (
                     <tr key={inv.id} className="border-t border-petrol-line/60">
                       <td className="px-4 py-3 text-ink-high">{inv.user_name}</td>
                       <td className="px-4 py-3 text-ink-muted">{inv.program_code}</td>

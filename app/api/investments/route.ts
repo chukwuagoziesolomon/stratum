@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
   const investmentResult = await pool.query(
     `INSERT INTO investments (user_id, program_code, amount, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, status)
-     VALUES ($1, $2, $3, 1, 100, 24, CURRENT_TIMESTAMP, 'active') RETURNING id, user_id, program_code, amount, current_percentage, target_percentage, status, created_at`,
+     VALUES ($1, $2, $3, 1, 100, 24, CURRENT_TIMESTAMP, 'pending') RETURNING id, user_id, program_code, amount, current_percentage, target_percentage, status, created_at`,
     [user.userId, programCode, `$${numericAmount.toLocaleString()}`]
   );
 
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
   });
 
   await pool.query(
-    `INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'approved')`,
-    [user.userId, `Investment ${programCode}`, date, "Investment", `-$${numericAmount.toLocaleString()}`]
+    `INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'pending')`,
+    [user.userId, `Investment request ${programCode}`, date, "Investment", `-$${numericAmount.toLocaleString()}`]
   );
 
   return NextResponse.json({ success: true, investment: investmentResult.rows[0] });
