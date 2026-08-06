@@ -3,105 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Check } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import SignupForm from "@/components/SignupForm";
 
-function strength(pw: string) {
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return score;
-}
-
-const labels = ["Too weak", "Weak", "Fair", "Good", "Strong"];
-const colors = ["#6E6459", "#D99A3D", "#D99A3D", "#EDB35C", "#FF6B35"];
-
-export default function Signup() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialReferral = searchParams.get("referralId") || "";
-  const [showPw, setShowPw] = useState(false);
-  const [pw, setPw] = useState("");
-  const [agree, setAgree] = useState(false);
-  const [riskAck, setRiskAck] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [referralId, setReferralId] = useState(initialReferral);
-
-  const s = strength(pw);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const name = String(form.get("name") || "");
-    const email = String(form.get("email") || "");
-    const password = String(form.get("password") || "");
-    const confirmPassword = String(form.get("confirmPassword") || "");
-    const phone = String(form.get("phone") || "");
-    const country = String(form.get("country") || "");
-    const referralId = String(form.get("referralId") || "");
-
-    if (!name || !email || !password || !confirmPassword || !phone || !country) {
-      setError("Fill in all required fields to continue.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (!agree || !riskAck) {
-      setError("Please accept the terms and the risk disclosure to open an account.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, phone, country, referralId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to create account.");
-        setLoading(false);
-        return;
-      }
-
-      router.push(`/verify?email=${encodeURIComponent(email)}`);
-    } catch {
-      setError("Something went wrong. Please try again.");
-      setLoading(false);
-    }
-  }
-
+export default function SignupPage() {
   return (
     <AuthLayout title="Open your account" subtitle="Takes about three minutes. Funding is optional until you're ready.">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Full name</label>
-          <input
-            name="name"
-            type="text"
-            className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
-            placeholder="Jordan Blake"
-          />
-        </div>
-
-        <div>
-          <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Email</label>
-          <input
-            name="email"
-            type="email"
-            className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
-            placeholder="you@email.com"
-          />
-        </div>
+      <SignupForm />
+    </AuthLayout>
+  );
+}
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -115,22 +26,11 @@ export default function Signup() {
           </div>
 
           <div>
-            <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Country</label>
-            <input
-              name="country"
-              type="text"
-              className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
-              placeholder="United States"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="font-display text-xs uppercase tracking-wider text-ink-muted">Password</label>
-          <div className="relative mt-2">
-            <input
-              name="password"
-              value={pw}
+    return (
+      <AuthLayout title="Open your account" subtitle="Takes about three minutes. Funding is optional until you're ready.">
+        <SignupForm />
+      </AuthLayout>
+    );
               onChange={(e) => setPw(e.target.value)}
               type={showPw ? "text" : "password"}
               className="w-full rounded-sm border border-petrol-line bg-petrol-panel px-4 py-3 pr-11 font-body text-sm text-ink-high placeholder:text-ink-soft focus:outline-none focus:ring-1 focus:ring-brass"
