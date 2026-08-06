@@ -131,6 +131,33 @@ export async function POST(request: NextRequest) {
     );
 
     try {
+      const userReferral = await pool.query("SELECT referral_id FROM users WHERE id = $1", [authUser.userId]);
+      const referrerId = userReferral.rows[0]?.referral_id;
+      if (referrerId) {
+        const existingDeposit = await pool.query("SELECT id FROM transactions WHERE user_id = $1 AND type = 'Deposit' AND status = 'approved' LIMIT 1", [authUser.userId]);
+        if (existingDeposit.rows.length === 0) {
+          const bonusAmount = amount * 0.05;
+          const bonusLabel = "Referral deposit bonus";
+          const bonusDate = new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+          await pool.query(
+            "INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'approved')",
+            [referrerId, bonusLabel, bonusDate, "Deposit", `+$${bonusAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
+          );
+          await pool.query(
+            "INSERT INTO referral_rewards (referrer_id, referred_id, reward_type, amount, description) VALUES ($1, $2, $3, $4, $5)",
+            [referrerId, authUser.userId, "first_deposit", `$${bonusAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, "5% of first deposit"]
+          );
+        }
+      }
+    } catch (referralError) {
+      console.error("Referral reward failed:", referralError);
+    }
+
+    try {
       await sendEmail({
         to: authUser.email,
         subject: "AeroneX Deposit received",

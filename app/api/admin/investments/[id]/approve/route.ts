@@ -39,8 +39,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: "Investment request already processed" }, { status: 400 });
   }
 
-  await pool.query("UPDATE investments SET status = 'active' WHERE id = $1", [investmentId]);
-  await pool.query("UPDATE transactions SET status = 'approved' WHERE user_id = $1 AND type = 'Investment' AND status = 'pending'", [investment.user_id]);
+  const now = new Date().toISOString();
+  await pool.query("UPDATE investments SET status = 'active', last_increment_at = $1 WHERE id = $2", [now, investmentId]);
+  await pool.query(
+    "UPDATE transactions SET status = 'approved', processed_at = $1 WHERE user_id = $2 AND type = 'Investment' AND status = 'pending' AND amount = $3",
+    [now, investment.user_id, `-${investment.amount}`]
+  );
 
   return NextResponse.json({ success: true });
 }

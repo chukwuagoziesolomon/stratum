@@ -59,6 +59,26 @@ export async function POST(request: NextRequest) {
 
     const user = result.rows[0];
 
+    if (validReferralId) {
+      try {
+        const date = new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+        await pool.query(
+          "INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'approved')",
+          [validReferralId, "Referral bonus", date, "Deposit", "+$50.00"]
+        );
+        await pool.query(
+          "INSERT INTO referral_rewards (referrer_id, referred_id, reward_type, amount, description) VALUES ($1, $2, $3, $4, $5)",
+          [validReferralId, user.id, "signup", "$50.00", "Referral signup bonus"]
+        );
+      } catch (referralError) {
+        console.error("Referral reward failed:", referralError);
+      }
+    }
+
     try {
       await sendEmail({
         to: user.email,

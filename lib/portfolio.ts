@@ -81,7 +81,7 @@ export async function sendDepositDecisionEmail({
 
 export async function syncInvestmentProgress(userId?: number) {
   const result = await pool.query(
-    `SELECT id, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, created_at
+    `SELECT id, user_id, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, created_at, amount, return_percentage, profit_distributed
      FROM investments
      WHERE status = 'active' AND current_percentage < target_percentage${userId ? " AND user_id = $1" : ""}`,
     userId ? [userId] : undefined
@@ -112,6 +112,49 @@ export async function syncInvestmentProgress(userId?: number) {
        WHERE id = $5`,
       [nextPercentage, nextLastIncrementAt, status, completedAt, investment.id]
     );
+
+    if (status === "completed" && !investment.profit_distributed) {
+      const numericAmount = Number(String(investment.amount).replace(/[^0-9.-]/g, "")) || 0;
+      const returnPercentage = Number(investment.return_percentage) || 10;
+      const profitAmount = numericAmount * (returnPercentage / 100);
+      const profitLabel = "Investment profit distribution";
+      const profitDate = new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      await pool.query(
+        "INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'approved')",
+        [investment.user_id, profitLabel, profitDate, "Deposit", `+$${profitAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
+      );
+
+      await pool.query("UPDATE investments SET profit_distributed = true WHERE id = $1", [investment.id]);
+
+      const userResult = await pool.query("SELECT email, name FROM users WHERE id = $1", [investment.user_id]);
+      if (userResult.rows.length > 0) {
+        const user = userResult.rows[0];
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: "Investment profit distributed",
+            html: `
+              <div style="font-family: system-ui, sans-serif; color: #0f0b08; background: #f7f8fb; padding: 24px;">
+                <div style="max-width: 560px; margin: auto; background: white; border-radius: 16px; padding: 24px; border: 1px solid #e7e9ed;">
+                  <h2 style="margin-top: 0;">Profit Distributed</h2>
+                  <p>Hi ${user.name},</p>
+                  <p>Your investment has completed and a profit of <strong>$${profitAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> has been credited to your available balance.</p>
+                  <p>Regards,<br/>The AeroneX Team</p>
+                </div>
+              </div>
+            `,
+            text: `Hi ${user.name},\n\nYour investment has completed and a profit of $${profitAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been credited to your available balance.\n\nRegards,\nThe AeroneX Team`,
+          });
+        } catch (emailError) {
+          console.error("Profit distribution email failed:", emailError);
+        }
+      }
+    }
   }
 }
 

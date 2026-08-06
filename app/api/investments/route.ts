@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
   }
 
   const investmentResult = await pool.query(
-    `INSERT INTO investments (user_id, program_code, amount, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, status)
-     VALUES ($1, $2, $3, 1, 100, 24, CURRENT_TIMESTAMP, 'pending') RETURNING id, user_id, program_code, amount, current_percentage, target_percentage, status, created_at`,
+    `INSERT INTO investments (user_id, program_code, amount, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, status, return_percentage)
+     VALUES ($1, $2, $3, 1, 100, 24, CURRENT_TIMESTAMP, 'pending', 10) RETURNING id, user_id, program_code, amount, current_percentage, target_percentage, status, created_at`,
     [user.userId, programCode, `$${numericAmount.toLocaleString()}`]
   );
 
@@ -88,6 +88,33 @@ export async function POST(request: NextRequest) {
     `INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'pending')`,
     [user.userId, `Investment request ${programCode}`, date, "Investment", `-$${numericAmount.toLocaleString()}`]
   );
+
+  try {
+    const userReferral = await pool.query("SELECT referral_id FROM users WHERE id = $1", [user.userId]);
+    const referrerId = userReferral.rows[0]?.referral_id;
+    if (referrerId) {
+      const existingInvestment = await pool.query("SELECT id FROM investments WHERE user_id = $1 AND status = 'active' LIMIT 1", [user.userId]);
+      if (existingInvestment.rows.length === 0) {
+        const bonusAmount = numericAmount * 0.05;
+        const bonusLabel = "Referral investment bonus";
+        const bonusDate = new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+        await pool.query(
+          "INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'approved')",
+          [referrerId, bonusLabel, bonusDate, "Deposit", `+$${bonusAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
+        );
+        await pool.query(
+          "INSERT INTO referral_rewards (referrer_id, referred_id, reward_type, amount, description) VALUES ($1, $2, $3, $4, $5)",
+          [referrerId, user.userId, "first_investment", `$${bonusAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, "5% of first investment"]
+        );
+      }
+    }
+  } catch (referralError) {
+    console.error("Referral reward failed:", referralError);
+  }
 
   return NextResponse.json({ success: true, investment: investmentResult.rows[0] });
 }
