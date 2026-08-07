@@ -20,12 +20,13 @@ async function getAuthUser(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const depositId = Number(params.id);
+  const { id } = await params;
+  const depositId = Number(id);
   const depositResult = await pool.query(
     "SELECT t.id, t.user_id, t.amount, t.status, t.wallet_coin, t.wallet_network, u.email, u.name FROM transactions t JOIN users u ON t.user_id = u.id WHERE t.id = $1 AND t.type = 'Deposit'",
     [depositId]

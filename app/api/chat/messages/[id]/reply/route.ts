@@ -22,13 +22,14 @@ async function getAuthUser(request: NextRequest) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const chatId = Number(params.id);
+  const { id } = await params;
+  const chatId = Number(id);
   const { reply } = await request.json();
   const adminReply = String(reply || "").trim();
 

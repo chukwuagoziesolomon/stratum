@@ -9,6 +9,8 @@ import InvestmentApprovalActions from "@/components/InvestmentApprovalActions";
 import WithdrawalActions from "@/components/WithdrawalActions";
 import ChatAdmin from "@/components/ChatAdmin";
 
+export const dynamic = "force-dynamic";
+
 const JWT_SECRET = process.env.JWT_SECRET || "stratum-energy-secret-key-2026";
 
 async function getCurrentUser() {

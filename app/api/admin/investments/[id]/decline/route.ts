@@ -19,12 +19,13 @@ async function getAuthUser(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const investmentId = Number(params.id);
+  const { id } = await params;
+  const investmentId = Number(id);
   if (!investmentId) {
     return NextResponse.json({ error: "Investment ID is required" }, { status: 400 });
   }

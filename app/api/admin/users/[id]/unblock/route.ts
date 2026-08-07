@@ -21,13 +21,14 @@ async function getAuthUser(request: NextRequest) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const targetUserId = Number(params.id);
+  const { id } = await params;
+  const targetUserId = Number(id);
   await pool.query("UPDATE users SET is_blocked = false WHERE id = $1", [targetUserId]);
   return NextResponse.json({ success: true, blocked: false });
 }

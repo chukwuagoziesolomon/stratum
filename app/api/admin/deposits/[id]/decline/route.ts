@@ -20,12 +20,13 @@ async function getAuthUser(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!user.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const depositId = Number(params.id);
+  const { id } = await params;
+  const depositId = Number(id);
   const body = await request.json();
   const reason = body.reason ? String(body.reason).trim() : null;
 
