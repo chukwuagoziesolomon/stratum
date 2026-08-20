@@ -183,7 +183,7 @@ export default async function AdminPage() {
                       <td className="px-4 py-3 text-ink-muted">{w.amount}</td>
                       <td className="px-4 py-3 font-mono text-xs text-ink-soft">
                         <div>{w.wallet_address}</div>
-                        <div className="text-ink-muted">{w.wallet_coin || "BNB"} / {w.wallet_network || "BNB Smart Chain"}</div>
+                        <div className="text-ink-muted">{w.wallet_coin || "USDT"} / {w.wallet_network || "TRON"}</div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`font-mono text-xs ${w.status === "approved" ? "text-emerald-400" : w.status === "declined" ? "text-red-400" : "text-brass"}`}>
@@ -221,7 +221,7 @@ export default async function AdminPage() {
                     <tr key={d.id} className="border-t border-petrol-line/60">
                       <td className="px-4 py-3 text-ink-high">{d.user_name}</td>
                       <td className="px-4 py-3 text-ink-muted">{d.amount}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-ink-soft">{d.wallet_coin || "BNB"} / {d.wallet_network || "BNB Smart Chain"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-ink-soft">{d.wallet_coin || "USDT"} / {d.wallet_network || "TRON"}</td>
                       <td className="px-4 py-3 font-mono text-xs text-ink-soft">{d.date}</td>
                       <td className="px-4 py-3">
                         <DepositActions id={d.id} />

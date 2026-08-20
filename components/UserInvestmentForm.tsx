@@ -22,7 +22,7 @@ export default function InvestmentForm({ opportunityId, minimumInvestment }: { o
     const res = await fetch("/api/investments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ programCode: `OPP-${opportunityId}`, amount: numericAmount.toString() }),
+      body: JSON.stringify({ opportunityId, amount: numericAmount.toString() }),
     });
 
     if (res.ok) {

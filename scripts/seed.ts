@@ -231,6 +231,63 @@ async function seed() {
       console.log("Admin already exists. No default admin created.");
     }
 
+    const existingPrograms = await client.query("SELECT COUNT(*) AS count FROM programs");
+    if (Number(existingPrograms.rows[0].count) === 0) {
+      const programRows = [
+        ["Niger Delta Onshore Fund", "NDO", "$5,000", "$50,000", "2–4 years", "7.2%–13.5% annualized (trailing 3yr)", 2, "Balanced", "Working interests in producing onshore wells in the Niger Delta with verifiable production data and published operator reports."],
+        ["Safaniyah Offshore Asset Fund", "SOA", "$10,000", "$200,000", "3–5 years", "9.5%–16.8% annualized (trailing 3yr)", 3, "Growth", "Offshore production sharing in Saudi Aramco-operated fields with long-term offtake agreements and transparent reservoir data."],
+        ["Brazil Deepwater Access Fund", "BDA", "$15,000", "$300,000", "4–6 years", "11.0%–19.2% annualized (trailing 3yr)", 4, "Aggressive", "Deepwater subsalt participation with Petrobras-supplemental offtake agreements. Returns tied to verified reservoir performance and liftings."],
+        ["Australia LNG Royalty Fund", "ALR", "$500", "$100,000", "2–4 years", "6.8%–10.4% annualized (trailing 3yr)", 2, "Balanced", "LNG-linked natural gas royalty interests in established Australian basins. Long-term contracts provide price visibility and contracted volumes."],
+      ];
+
+      for (const row of programRows) {
+        await client.query(
+          `INSERT INTO programs (name, code, min_investment, max_investment, horizon, historical_range, strata, risk_label, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          row
+        );
+      }
+      console.log("Programs seeded.");
+    } else {
+      console.log("Programs already exist. No programs seeded.");
+    }
+
+    const existingOpportunities = await client.query("SELECT COUNT(*) AS count FROM opportunities");
+    if (Number(existingOpportunities.rows[0].count) === 0) {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS opportunities (
+          id SERIAL PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category TEXT NOT NULL,
+          location TEXT NOT NULL,
+          minimum_investment TEXT NOT NULL,
+          expected_return TEXT NOT NULL,
+          duration TEXT NOT NULL,
+          risk_level TEXT NOT NULL,
+          image_url TEXT,
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      const opportunityRows = [
+        ["Niger Delta Onshore Wells", "12-well onshore pad in the Niger Delta with three years of published production data and audited operator reports. Minimums designed for direct participation.", "Upstream", "Niger Delta, Nigeria", "$5,000", "8-12% annually", "18-24 months", "Low"],
+        ["Safaniyah Offshore Assets", "Offshore production sharing in Saudi Aramco-operated fields. Long-term offtake agreements and transparent reservoir data.", "Offshore", "Saudi Arabia", "$10,000", "9-14% annually", "24-36 months", "Medium"],
+        ["Brazil Deepwater Access", "Deepwater subsalt participation with Petrobras-supplemental offtake agreements. Returns tied to verified reservoir performance and liftings.", "Deepwater", "Brazil", "$15,000", "12-18% annually", "36-48 months", "High"],
+        ["Australia LNG Royalties", "LNG-linked natural gas royalty interests in established Australian basins. Long-term contracts provide price visibility and contracted volumes.", "LNG", "Australia", "$500", "7-11% annually", "24-36 months", "Low"],
+      ];
+
+      for (const row of opportunityRows) {
+        await client.query(
+          `INSERT INTO opportunities (title, description, category, location, minimum_investment, expected_return, duration, risk_level) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          row
+        );
+      }
+      console.log("Opportunities seeded.");
+    } else {
+      console.log("Opportunities already exist. No opportunities seeded.");
+    }
+
     console.log("All tables created. No mock data inserted.");
   } finally {
     client.release();

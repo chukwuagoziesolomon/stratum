@@ -70,7 +70,7 @@ export default async function DashboardOverview() {
   const referralLink = `/signup?referralId=${referralCode}`;
   const depositTransactions = (await pool.query("SELECT amount, status FROM transactions WHERE user_id = $1 AND type = 'Deposit'", [user.userId])).rows;
   const approvedWithdrawals = (await pool.query("SELECT amount FROM withdrawals WHERE user_id = $1 AND status = 'approved'", [user.userId])).rows;
-  const approvedInvestments = (await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment' AND status = 'approved'", [user.userId])).rows;
+  const allInvestments = (await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment'", [user.userId])).rows;
 
   const approvedDepositTotal = depositTransactions
     .filter((t: { amount: string; status: string }) => t.status === "approved")
@@ -83,7 +83,7 @@ export default async function DashboardOverview() {
   const approvedWithdrawalTotal = approvedWithdrawals
     .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
-  const investedTotal = approvedInvestments
+  const investedTotal = allInvestments
     .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
   const holdingsValue = holdings.reduce((sum: number, h: { value: string }) => sum + parseCurrencyValue(h.value), 0);

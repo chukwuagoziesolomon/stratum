@@ -14,7 +14,7 @@ export const programs: Program[] = [
   {
     name: "Niger Delta Onshore Fund",
     code: "NDO",
-    minInvestment: "$2,000",
+    minInvestment: "$5,000",
     maxInvestment: "$50,000",
     horizon: "2–4 years",
     historicalRange: "7.2%–13.5% annualized (trailing 3yr)",
@@ -50,7 +50,7 @@ export const programs: Program[] = [
   {
     name: "Australia LNG Royalty Fund",
     code: "ALR",
-    minInvestment: "$5,000",
+    minInvestment: "$500",
     maxInvestment: "$100,000",
     horizon: "2–4 years",
     historicalRange: "6.8%–10.4% annualized (trailing 3yr)",

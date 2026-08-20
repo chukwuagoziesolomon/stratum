@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "Deposit") {
-      walletCoin = process.env.CRYPTO_DEPOSIT_WALLET_COIN || "BNB";
-      walletNetwork = process.env.CRYPTO_DEPOSIT_WALLET_NETWORK || "BNB Smart Chain";
+      walletCoin = process.env.CRYPTO_DEPOSIT_WALLET_COIN || "USDT";
+      walletNetwork = process.env.CRYPTO_DEPOSIT_WALLET_NETWORK || "TRON";
     }
 
     const amount = Number(amountStr.replace(/[^0-9.-]/g, ""));

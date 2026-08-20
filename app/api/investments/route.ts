@@ -23,7 +23,7 @@ async function getAvailableCash(userId: number) {
   const approvedWithdrawalTotal = withdrawalRes.rows
     .reduce((sum: number, txn: { amount: string }) => sum + parseCurrencyValue(txn.amount), 0);
 
-  const investmentRes = await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment' AND status = 'approved'", [userId]);
+  const investmentRes = await pool.query("SELECT amount FROM transactions WHERE user_id = $1 AND type = 'Investment'", [userId]);
   const investedTotal = investmentRes.rows
     .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
 
@@ -50,21 +50,45 @@ export async function POST(request: NextRequest) {
   if (user.isBlocked) return NextResponse.json({ error: "Account blocked" }, { status: 403 });
 
   const body = await request.json();
+  const opportunityId = String(body.opportunityId || "").trim();
   const programCode = String(body.programCode || "").trim().toUpperCase();
   const amount = String(body.amount || "").trim();
 
-  if (!programCode || !amount) {
-    return NextResponse.json({ error: "Program code and amount are required" }, { status: 400 });
-  }
-
-  const program = await pool.query("SELECT code, min_investment, max_investment FROM programs WHERE code = $1", [programCode]);
-  if (program.rows.length === 0) {
-    return NextResponse.json({ error: "Invalid program code" }, { status: 404 });
+  if (!amount) {
+    return NextResponse.json({ error: "Amount is required" }, { status: 400 });
   }
 
   const numericAmount = Number(amount.replace(/[^0-9.-]/g, ""));
   if (Number.isNaN(numericAmount) || numericAmount <= 0) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  }
+
+  let targetCode = programCode;
+  let minimumInvestment = 0;
+
+  if (opportunityId) {
+    const opportunityResult = await pool.query("SELECT id, title, minimum_investment FROM opportunities WHERE id = $1", [opportunityId]);
+    if (opportunityResult.rows.length === 0) {
+      return NextResponse.json({ error: "Invalid opportunity" }, { status: 404 });
+    }
+    const opportunity = opportunityResult.rows[0];
+    const oppMin = Number(String(opportunity.minimum_investment).replace(/[^0-9.-]/g, "")) || 0;
+    if (numericAmount < oppMin) {
+      return NextResponse.json({ error: `Minimum investment for this opportunity is ${opportunity.minimum_investment}` }, { status: 400 });
+    }
+    targetCode = `OPP-${opportunity.id}`;
+  } else if (programCode) {
+    const program = await pool.query("SELECT code, min_investment, max_investment FROM programs WHERE code = $1", [programCode]);
+    if (program.rows.length === 0) {
+      return NextResponse.json({ error: "Invalid program code" }, { status: 404 });
+    }
+    const programMin = Number(String(program.rows[0].min_investment).replace(/[^0-9.-]/g, "")) || 0;
+    if (numericAmount < programMin) {
+      return NextResponse.json({ error: `Minimum investment for this program is ${program.rows[0].min_investment}` }, { status: 400 });
+    }
+    targetCode = program.rows[0].code;
+  } else {
+    return NextResponse.json({ error: "Opportunity ID or program code is required" }, { status: 400 });
   }
 
   const availableCash = await getAvailableCash(user.userId);
@@ -75,7 +99,7 @@ export async function POST(request: NextRequest) {
   const investmentResult = await pool.query(
     `INSERT INTO investments (user_id, program_code, amount, current_percentage, target_percentage, auto_increment_interval_hours, last_increment_at, status, return_percentage)
      VALUES ($1, $2, $3, 1, 100, 24, CURRENT_TIMESTAMP, 'pending', 10) RETURNING id, user_id, program_code, amount, current_percentage, target_percentage, status, created_at`,
-    [user.userId, programCode, `$${numericAmount.toLocaleString()}`]
+    [user.userId, targetCode, `$${numericAmount.toLocaleString()}`]
   );
 
   const date = new Date().toLocaleDateString("en-US", {
@@ -86,7 +110,7 @@ export async function POST(request: NextRequest) {
 
   await pool.query(
     `INSERT INTO transactions (user_id, label, date, type, amount, status) VALUES ($1, $2, $3, $4, $5, 'pending')`,
-    [user.userId, `Investment request ${programCode}`, date, "Investment", `-$${numericAmount.toLocaleString()}`]
+    [user.userId, `Investment request ${targetCode}`, date, "Investment", `-$${numericAmount.toLocaleString()}`]
   );
 
   try {

@@ -64,7 +64,7 @@ async function migrate() {
         description: "LNG-linked natural gas royalty interests in established Australian basins. Long-term contracts provide price visibility and contracted volumes.",
         category: "LNG",
         location: "Australia",
-        minimum_investment: "$5,000",
+        minimum_investment: "$500",
         expected_return: "7-11% annually",
         duration: "24-36 months",
         risk_level: "Low",

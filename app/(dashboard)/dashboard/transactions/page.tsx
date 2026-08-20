@@ -24,13 +24,13 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<User>(null);
   const [depositWalletAddress, setDepositWalletAddress] = useState<string | null>(null);
-  const [depositWalletCoin, setDepositWalletCoin] = useState<string>("BNB");
-  const [depositWalletNetwork, setDepositWalletNetwork] = useState<string>("BNB Smart Chain");
+  const [depositWalletCoin, setDepositWalletCoin] = useState<string>("USDT");
+  const [depositWalletNetwork, setDepositWalletNetwork] = useState<string>("TRON");
   const [activeAction, setActiveAction] = useState<"deposit" | "withdraw" | null>(null);
   const [amount, setAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
-  const [withdrawalCoin, setWithdrawalCoin] = useState("BNB");
-  const [withdrawalNetwork, setWithdrawalNetwork] = useState("BNB Smart Chain");
+  const [withdrawalCoin, setWithdrawalCoin] = useState("USDT");
+  const [withdrawalNetwork, setWithdrawalNetwork] = useState("TRON");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -52,13 +52,13 @@ export default function Transactions() {
       .then((r) => r.json())
       .then((data) => {
         setDepositWalletAddress(data.depositWalletAddress || null);
-        setDepositWalletCoin(data.depositWalletCoin || "BNB");
-        setDepositWalletNetwork(data.depositWalletNetwork || "BNB Smart Chain");
+        setDepositWalletCoin(data.depositWalletCoin || "USDT");
+        setDepositWalletNetwork(data.depositWalletNetwork || "TRON");
       })
       .catch(() => {
         setDepositWalletAddress(null);
-        setDepositWalletCoin("BNB");
-        setDepositWalletNetwork("BNB Smart Chain");
+        setDepositWalletCoin("USDT");
+        setDepositWalletNetwork("TRON");
       });
   }, []);
 
@@ -201,10 +201,10 @@ export default function Transactions() {
                       onChange={(e) => setWithdrawalCoin(e.target.value)}
                       className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
                     >
-                      <option value="BNB">BNB</option>
-                      <option value="ETH">ETH</option>
                       <option value="USDT">USDT</option>
+                      <option value="ETH">ETH</option>
                       <option value="BTC">BTC</option>
+                      <option value="BNB">BNB</option>
                     </select>
                   </div>
                   <div>
@@ -214,7 +214,7 @@ export default function Transactions() {
                       onChange={(e) => setWithdrawalNetwork(e.target.value)}
                       className="mt-2 w-full rounded-sm border border-petrol-line bg-petrol px-4 py-3 font-body text-sm text-ink-high focus:outline-none focus:ring-1 focus:ring-brass"
                     >
-                      <option value="BNB Smart Chain">BNB Smart Chain</option>
+                      <option value="TRON">TRON (TRC20)</option>
                       <option value="Ethereum">Ethereum</option>
                       <option value="Polygon">Polygon</option>
                       <option value="Bitcoin">Bitcoin</option>
