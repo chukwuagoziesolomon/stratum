@@ -62,7 +62,7 @@ export default async function DashboardOverview() {
     redirect("/login");
   }
   const statsResult = await pool.query("SELECT label, value, change, up, icon FROM stats ORDER BY id ASC");
-  const holdings = (await pool.query("SELECT name, code, value, weight, ytd, units FROM holdings WHERE user_id = $1 ORDER BY id ASC", [user.userId])).rows;
+  const activeInvestments = (await pool.query("SELECT id, program_code, amount, current_percentage, target_percentage, return_percentage, status FROM investments WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC", [user.userId])).rows as { id: number; program_code: string; amount: string; current_percentage: number; target_percentage: number; return_percentage: number; status: string }[];
   const activity = (await pool.query("SELECT label, date, amount, status FROM transactions WHERE user_id = $1 ORDER BY id ASC LIMIT 4", [user.userId])).rows;
   const referralRow = (await pool.query("SELECT referral_code, referral_id FROM users WHERE id = $1", [user.userId])).rows[0] || {};
   const referralCode = referralRow.referral_code || (await ensureReferralCode(user.userId));
@@ -85,6 +85,57 @@ export default async function DashboardOverview() {
 
   const investedTotal = allInvestments
     .reduce((sum: number, txn: { amount: string }) => sum + absoluteCurrencyValue(txn.amount), 0);
+
+  const programCodes = [...new Set(activeInvestments.map((i: { program_code: string }) => i.program_code).filter((c: string) => !String(c).startsWith("OPP-")))];
+  const oppIds = activeInvestments
+    .filter((i: { program_code: string }) => String(i.program_code).startsWith("OPP-"))
+    .map((i: { program_code: string }) => Number(String(i.program_code).replace("OPP-", "")))
+    .filter((id: number) => !Number.isNaN(id));
+
+  const [programsMap, opportunitiesMap] = await Promise.all([
+    programCodes.length
+      ? pool.query("SELECT code, name FROM programs WHERE code = ANY($1)", [programCodes]).then((r) => {
+          const map: Record<string, string> = {};
+          r.rows.forEach((row: { code: string; name: string }) => {
+            map[row.code] = row.name;
+          });
+          return map;
+        })
+      : Promise.resolve({} as Record<string, string>),
+    oppIds.length
+      ? pool.query("SELECT id, title FROM opportunities WHERE id = ANY($1)", [oppIds]).then((r) => {
+          const map: Record<number, string> = {};
+          r.rows.forEach((row: { id: number; title: string }) => {
+            map[row.id] = row.title;
+          });
+          return map;
+        })
+      : Promise.resolve({} as Record<number, string>),
+  ]);
+
+  const holdings = activeInvestments.map((inv) => {
+    const code = String(inv.program_code);
+    let name = code;
+    if (code.startsWith("OPP-")) {
+      const oppId = Number(code.replace("OPP-", ""));
+      name = opportunitiesMap[oppId] || code;
+    } else {
+      name = programsMap[code] || code;
+    }
+
+    const numericAmount = Number(String(inv.amount).replace(/[^0-9.-]/g, "")) || 0;
+    const currentPercentage = Number(inv.current_percentage) || 0;
+    const returnPct = Number(inv.return_percentage) || 10;
+
+    return {
+      name,
+      code,
+      value: inv.amount,
+      weight: `${currentPercentage}%`,
+      ytd: `+${returnPct}%`,
+      units: `$${numericAmount.toLocaleString()}`,
+    };
+  });
 
   const holdingsValue = holdings.reduce((sum: number, h: { value: string }) => sum + parseCurrencyValue(h.value), 0);
   const availableBalance = Math.max(0, approvedDepositTotal - approvedWithdrawalTotal - investedTotal);

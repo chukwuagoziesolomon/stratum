@@ -21,11 +21,63 @@ export default async function Holdings() {
     redirect("/login");
   }
 
-  const result = await pool.query(
-    "SELECT name, code, value, weight, ytd, units FROM holdings WHERE user_id = $1 ORDER BY id ASC",
+  const activeInvestments = (await pool.query(
+    "SELECT program_code, amount, current_percentage, target_percentage, return_percentage FROM investments WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC",
     [user.userId]
-  );
-  const holdings = result.rows;
+  )).rows as { program_code: string; amount: string; current_percentage: number; target_percentage: number; return_percentage: number }[];
+
+  const programCodes = [...new Set(activeInvestments.map((i) => i.program_code).filter((c) => !String(c).startsWith("OPP-")))];
+  const oppIds = activeInvestments
+    .filter((i) => String(i.program_code).startsWith("OPP-"))
+    .map((i) => Number(String(i.program_code).replace("OPP-", "")))
+    .filter((id) => !Number.isNaN(id));
+
+  const [programsMap, opportunitiesMap] = await Promise.all([
+    programCodes.length
+      ? pool.query("SELECT code, name FROM programs WHERE code = ANY($1)", [programCodes]).then((r) => {
+          const map: Record<string, string> = {};
+          r.rows.forEach((row: { code: string; name: string }) => {
+            map[row.code] = row.name;
+          });
+          return map;
+        })
+      : Promise.resolve({} as Record<string, string>),
+    oppIds.length
+      ? pool.query("SELECT id, title FROM opportunities WHERE id = ANY($1)", [oppIds]).then((r) => {
+          const map: Record<number, string> = {};
+          r.rows.forEach((row: { id: number; title: string }) => {
+            map[row.id] = row.title;
+          });
+          return map;
+        })
+      : Promise.resolve({} as Record<number, string>),
+  ]);
+
+  const holdings = activeInvestments.map((inv) => {
+    const code = String(inv.program_code);
+    let name = code;
+    if (code.startsWith("OPP-")) {
+      const oppId = Number(code.replace("OPP-", ""));
+      name = opportunitiesMap[oppId] || code;
+    } else {
+      name = programsMap[code] || code;
+    }
+
+    const numericAmount = Number(String(inv.amount).replace(/[^0-9.-]/g, "")) || 0;
+    const currentPercentage = Number(inv.current_percentage) || 0;
+    const targetPercentage = Number(inv.target_percentage) || 100;
+    const returnPct = Number(inv.return_percentage) || 10;
+
+    return {
+      name,
+      code,
+      units: `${currentPercentage}%`,
+      value: inv.amount,
+      weight: `${targetPercentage}%`,
+      ytd: `+${returnPct}%`,
+    };
+  });
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 md:px-10 md:py-12">
       <p className="font-mono text-xs uppercase tracking-widest text-brass">Holdings</p>
@@ -45,7 +97,7 @@ export default async function Holdings() {
             </tr>
           </thead>
           <tbody className="font-body text-sm">
-            {holdings.map((h: { name: string; code: string; value: string; weight: string; ytd: string; units: string }) => (
+            {holdings.map((h: { name: string; code: string; units: string; value: string; weight: string; ytd: string }) => (
               <tr key={h.code} className="border-t border-petrol-line/60">
                 <td className="px-6 py-4">
                   <p className="text-ink-high">{h.name}</p>
